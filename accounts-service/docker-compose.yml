@@ -1,0 +1,22 @@
+services:
+  accounts-service:
+    build: .
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${accounts_DB_HOST}:5432/${accounts_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${accounts_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${accounts_DB_PASSWORD}
+      SERVER_PORT: ${SERVER_PORT}
+    depends_on:
+      - accounts-db
+
+  accounts-db:
+    image: postgres:16
+    container_name: accounts-db
+    environment:
+      POSTGRES_DB: ${accounts_DB_NAME}
+      POSTGRES_USER: ${accounts_DB_USERNAME}
+      POSTGRES_PASSWORD: ${accounts_DB_PASSWORD}
+    ports:
+      - "5433:5432"
