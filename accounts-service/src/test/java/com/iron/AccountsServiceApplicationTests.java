@@ -1,4 +1,4 @@
-package ru.practicum.template;
+package com.iron;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
