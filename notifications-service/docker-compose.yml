@@ -1,0 +1,22 @@
+services:
+  notifications-service:
+    build: .
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${notifications_DB_HOST}:5432/${notifications_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${notifications_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${notifications_DB_PASSWORD}
+      SERVER_PORT: ${SERVER_PORT}
+    depends_on:
+      - notifications-db
+
+  notifications-db:
+    image: postgres:16
+    container_name: notifications-db
+    environment:
+      POSTGRES_DB: ${notifications_DB_NAME}
+      POSTGRES_USER: ${notifications_DB_USERNAME}
+      POSTGRES_PASSWORD: ${notifications_DB_PASSWORD}
+    ports:
+      - "5433:5432"
