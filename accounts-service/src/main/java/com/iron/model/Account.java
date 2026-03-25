@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -15,13 +17,13 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "accounts")
 public class Account {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(unique = true, nullable = false)
     private String login;
-    private String name;
-    private OffsetDateTime birthday;
-    private Long sum;
-
+    private String firstName;
+    private String lastName;
+    private LocalDate birthday;
+    private BigDecimal balance;
 }

@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine
+./gradlew clean buildFROM eclipse-temurin:21-jdk-alpine
 
 WORKDIR /app
 

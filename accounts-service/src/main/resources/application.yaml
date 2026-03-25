@@ -9,6 +9,22 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/bank-app-realm
+      client:
+        registration:
+          notifications-client:
+            provider: keycloak
+            client-id: accounts-service-client
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid, profile
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/bank-app-realm
 
 server:
   port: ${SERVER_PORT:8081}

@@ -1,13 +1,17 @@
 package com.iron.controller;
 
 import com.iron.dto.AccountDto;
+import com.iron.dto.AccountPublicDto;
+import com.iron.dto.AccountUpdateDto;
 import com.iron.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -18,7 +22,22 @@ public class AccountController {
 
     @GetMapping("/account")
     @ResponseStatus(HttpStatus.OK)
-    public AccountDto getAccount() {
-        return accountService.getAccount();
+    public AccountDto getAccount(@AuthenticationPrincipal Jwt jwt) {
+        String login = jwt.getClaimAsString("preferred_username");
+        return accountService.getAccount(login);
+    }
+
+    @PostMapping("/account")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public AccountDto updateAccount(@AuthenticationPrincipal Jwt jwt,
+                                      @RequestBody AccountUpdateDto updateDto) {
+        String login = jwt.getClaimAsString("preferred_username");
+        return accountService.updateAccount(login, updateDto);
+    }
+
+    @GetMapping("/search")
+    public List<AccountPublicDto> search(@AuthenticationPrincipal Jwt jwt) {
+        String myLogin = jwt.getClaimAsString("preferred_username");
+        return accountService.searchOthersAccounts(myLogin);
     }
 }
