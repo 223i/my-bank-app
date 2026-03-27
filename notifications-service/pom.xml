@@ -8,11 +8,10 @@
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <groupId>com.iron</groupId>
     <artifactId>notifications-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>notifications-service</name>
     <description>Microservice for notifications management</description>
+    <packaging>jar</packaging>
 
     <properties>
         <java.version>21</java.version>
@@ -97,6 +96,7 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <classifier>exec</classifier>
                 </configuration>
             </plugin>
         </plugins>

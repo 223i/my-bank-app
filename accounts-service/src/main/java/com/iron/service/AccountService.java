@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import javax.security.auth.login.AccountNotFoundException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -57,6 +58,36 @@ public class AccountService {
         List<Account> others = accountRepository.findAllByLoginNot(currentLogin);
 
         return mapper.toPublicDtoList(others);
+    }
+
+    @Transactional
+    @SneakyThrows
+    public void decreaseBalance(String login, BigDecimal amount) {
+        log.info("Decreasing balance for {} by {}", login, amount);
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
+        
+        if (account.getBalance().compareTo(amount) < 0) {
+            throw new IllegalArgumentException("Insufficient funds");
+        }
+        
+        account.setBalance(account.getBalance().subtract(amount));
+        accountRepository.save(account);
+        
+        sendNotification(login, "С вашего счета списано: " + amount, "BALANCE_DECREASE");
+    }
+
+    @Transactional
+    @SneakyThrows
+    public void increaseBalance(String login, BigDecimal amount) {
+        log.info("Increasing balance for {} by {}", login, amount);
+        Account account = accountRepository.findByLogin(login)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
+        
+        account.setBalance(account.getBalance().add(amount));
+        accountRepository.save(account);
+        
+        sendNotification(login, "На ваш счет зачислено: " + amount, "BALANCE_INCREASE");
     }
 
     public void sendNotification(String login, String text, String type) {

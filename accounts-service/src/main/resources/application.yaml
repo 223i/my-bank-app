@@ -28,7 +28,7 @@ spring:
 
 notifications:
   service:
-    url: http://notifications-service:8081
+    url: http://notifications-service:8082
 
 server:
   port: ${SERVER_PORT:8081}

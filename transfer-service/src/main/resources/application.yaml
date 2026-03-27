@@ -1,17 +1,13 @@
 spring:
   application:
     name: transfer-service
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8083}
 
 management:
   endpoints:
@@ -21,3 +17,27 @@ management:
   endpoint:
     health:
       show-details: always
+
+  security:
+    oauth2:
+      client:
+        registration:
+          transfer-service-client:
+            provider: keycloak
+            client-id: transfer-service-client
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid, profile
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/bank-app-realm
+
+notifications:
+  service:
+    url: http://notifications-service:8082
+
+
+accounts:
+  service:
+    url: http://accounts-service:8081
+

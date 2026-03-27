@@ -20,6 +20,7 @@ public class RestClientConfig {
 
         OAuth2ClientHttpRequestInterceptor interceptor =
                 new OAuth2ClientHttpRequestInterceptor(authorizedClientManager);
+        interceptor.setClientRegistrationIdResolver(request -> "account-service-client");
 
         return builder
                 .baseUrl(notificationServiceUrl) // сервис уведомлений

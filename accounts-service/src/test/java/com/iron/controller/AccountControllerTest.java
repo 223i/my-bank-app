@@ -122,7 +122,7 @@ class AccountControllerTest {
         mockMvc.perform(post("/account")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testUpdateDto)))
-                .andExpect(status().isForbidden()); // CSRF returns 403 instead of 401
+                .andExpect(status().isForbidden()); // TODO: check CSRF returns 403 instead of 401
     }
 
     @Test
@@ -134,7 +134,7 @@ class AccountControllerTest {
                         .with(jwt().jwt(testJwt))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
-                .andExpect(status().isInternalServerError()); // JSON parsing error returns 500
+                .andExpect(status().isInternalServerError()); //TODO: check JSON parsing error returns 500
     }
 
     @Test

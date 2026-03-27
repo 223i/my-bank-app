@@ -198,9 +198,6 @@ class AccountServiceTest {
         String type = "TEST";
 
         accountService.sendNotification(login, text, type);
-
-        // Since RestClient is complex to mock, we just verify the method executes without exception
-        // In a real scenario, you might want to use a real test server or different approach
     }
 
     @Test
@@ -210,10 +207,6 @@ class AccountServiceTest {
         String text = "Test notification";
         String type = "TEST";
 
-        // Test that the method handles exceptions gracefully
         accountService.sendNotification(login, text, type);
-
-        // Since RestClient is complex to mock, we just verify the method executes without exception
-        // In a real scenario, you might want to use a real test server or different approach
     }
 }
