@@ -1,17 +1,30 @@
 spring:
   application:
     name: cash-service
-  datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  security:
+    oauth2:
+      client:
+        registration:
+          cash-service-client:
+            provider: keycloak
+            client-id: cash-service-client
+            client-secret: ${CASH_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid, profile
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/bank-app-realm
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/bank-app-realm
+
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8084}
 
 management:
   endpoints:
@@ -21,3 +34,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+accounts:
+  service:
+    url: http://accounts-service:8081
+notifications:
+  service:
+    url: http://notifications-service:8082
