@@ -1,5 +1,6 @@
 package com.iron.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
@@ -8,6 +9,9 @@ import org.springframework.web.client.RestClient;
 
 @Configuration
 public class RestClientConfig {
+
+    @Value("${notifications.service.url}")
+    private String notificationServiceUrl;
 
     @Bean
     public RestClient notificationsRestClient(
@@ -18,7 +22,7 @@ public class RestClientConfig {
                 new OAuth2ClientHttpRequestInterceptor(authorizedClientManager);
 
         return builder
-                .baseUrl("http://notifications-service:8081") // сервис уведомлений
+                .baseUrl(notificationServiceUrl) // сервис уведомлений
                 .requestInterceptor(interceptor)
                 .build();
     }

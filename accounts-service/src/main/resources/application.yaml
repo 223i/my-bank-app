@@ -26,6 +26,10 @@ spring:
           keycloak:
             issuer-uri: http://localhost:8080/realms/bank-app-realm
 
+notifications:
+  service:
+    url: http://notifications-service:8081
+
 server:
   port: ${SERVER_PORT:8081}
 
