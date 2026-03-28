@@ -14,6 +14,15 @@ public class RestClientConfig {
     private String notificationServiceUrl;
 
     @Bean
+    public RestClient notificationsRestClient(RestClient.Builder builder) {
+        return builder
+                .baseUrl(notificationServiceUrl)
+                .build();
+    }
+    
+    // Temporarily commented out OAuth2 configuration
+    /*
+    @Bean
     public RestClient notificationsRestClient(
             RestClient.Builder builder,
             OAuth2AuthorizedClientManager authorizedClientManager) {
@@ -27,4 +36,5 @@ public class RestClientConfig {
                 .requestInterceptor(interceptor)
                 .build();
     }
+    */
 }

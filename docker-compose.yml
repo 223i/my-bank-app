@@ -10,7 +10,7 @@ services:
     ports:
       - "5433:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${COMMON_DB_USERNAME} -d ${COMMON_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -36,21 +36,37 @@ services:
 
   accounts-service:
     build: ./accounts-service
+    ports:
+      - "8081:8081"
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - SERVER_PORT=8081
+      - CLIENT_SECRET=${CLIENT_SECRET}
     depends_on:
       common-db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
 
   notifications-service:
     build: ./notifications-service
+    ports:
+      - "8082:8082"
     environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - SERVER_PORT=8082
     depends_on:
-      - keycloak
+      common-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
   transfer-service:
     build: ./transfer-service
