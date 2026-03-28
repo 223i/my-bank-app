@@ -1,6 +1,18 @@
 spring:
   application:
     name: accounts-service
+  cloud:
+    consul:
+      host: localhost          # Адрес Consul (по умолчанию localhost)
+      port: 8500               # Порт Consul (8500 по умолчанию)
+      discovery:
+        service-name: accounts-service
+      config:
+        enabled: true            # Включаем Consul Config для внешней конфигурации
+        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
+        defaultContext: application  # Контекст по умолчанию
+
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -26,12 +38,12 @@ spring:
 #          keycloak:
 #            issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/bank-app-realm}
 
+server:
+  port: ${SERVER_PORT:8081}
+
 notifications:
   service:
     url: http://notifications-service:8082
-
-server:
-  port: ${SERVER_PORT:8081}
 
 management:
   endpoints:

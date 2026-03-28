@@ -5,6 +5,15 @@ spring:
   application:
     name: gateway-service
   cloud:
+    consul:
+      host: localhost          # Адрес Consul (по умолчанию localhost)
+      port: 8500               # Порт Consul (8500 по умолчанию)
+      discovery:
+        service-name: gateway-service
+      config:
+        enabled: true            # Включаем Consul Config для внешней конфигурации
+        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
+        defaultContext: application  # Контекст по умолчанию
     gateway:
       default-filters:
         - TokenRelay

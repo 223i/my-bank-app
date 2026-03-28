@@ -1,5 +1,14 @@
 services:
   # --- Инфраструктура ---
+  consul:
+    image: hashicorp/consul:1.15.4
+    container_name: consul
+    ports:
+      - "8500:8500" # UI и API (для твоих сервисов)
+    command: "agent -dev -client=0.0.0.0"
+    networks:
+      - microservices-network
+
   common-db:
     image: postgres:16
     container_name: common-db
@@ -33,6 +42,7 @@ services:
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
     depends_on:
       - keycloak
+      - consul
 
   accounts-service:
     build: ./accounts-service
@@ -51,6 +61,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_started
+      consul:
+        condition: service_started
 
   notifications-service:
     build: ./notifications-service
@@ -67,6 +79,8 @@ services:
         condition: service_healthy
       keycloak:
         condition: service_started
+      consul:
+        condition: service_started
 
   transfer-service:
     build: ./transfer-service
@@ -76,6 +90,7 @@ services:
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_TRANSFER_CLIENT_REG_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
     depends_on:
       - accounts-service
+      - consul
 
   cash-service:
     build: ./cash-service
@@ -85,3 +100,4 @@ services:
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_CASH_CLIENT_REG_CLIENT_SECRET=${CASH_CLIENT_SECRET}
     depends_on:
       - accounts-service
+      - consul
