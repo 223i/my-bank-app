@@ -39,6 +39,7 @@ services:
     ports:
       - "8000:8080"
     environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
     depends_on:
       - keycloak
@@ -49,6 +50,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
@@ -69,10 +71,12 @@ services:
     ports:
       - "8082:8082"
     environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
       - SERVER_PORT=8082
     depends_on:
       common-db:
@@ -85,9 +89,11 @@ services:
   transfer-service:
     build: ./transfer-service
     environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
       - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_TRANSFER_CLIENT_REG_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
+      - CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
     depends_on:
       - accounts-service
       - consul
@@ -95,9 +101,11 @@ services:
   cash-service:
     build: ./cash-service
     environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
       - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_CASH_CLIENT_REG_CLIENT_SECRET=${CASH_CLIENT_SECRET}
+      - CASH_CLIENT_SECRET=${CASH_CLIENT_SECRET}
     depends_on:
       - accounts-service
       - consul

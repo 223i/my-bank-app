@@ -3,18 +3,31 @@ spring:
     name: transfer-service
   cloud:
     consul:
-      host: localhost          # Адрес Consul (по умолчанию localhost)
-      port: 8500               # Порт Consul (8500 по умолчанию)
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: 8500
       discovery:
         service-name: transfer-service
       config:
-        enabled: true            # Включаем Consul Config для внешней конфигурации
-        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
-        defaultContext: application  # Контекст по умолчанию
+        enabled: true
+        prefix: config
+        defaultContext: application
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  security:
+    oauth2:
+      client:
+        registration:
+          transfer-service-client:
+            provider: keycloak
+            client-id: transfer-service-client
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid, profile
+        provider:
+          keycloak:
+            issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/bank-app-realm}
 
 server:
   port: ${SERVER_PORT:8083}
@@ -28,26 +41,10 @@ management:
     health:
       show-details: always
 
-  security:
-    oauth2:
-      client:
-        registration:
-          transfer-service-client:
-            provider: keycloak
-            client-id: transfer-service-client
-            client-secret: ${CLIENT_SECRET}
-            authorization-grant-type: client_credentials
-            scope: openid, profile
-        provider:
-          keycloak:
-            issuer-uri: http://localhost:8080/realms/bank-app-realm
-
 notifications:
   service:
     url: http://notifications-service:8082
 
-
 accounts:
   service:
     url: http://accounts-service:8081
-

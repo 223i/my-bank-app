@@ -3,15 +3,14 @@ spring:
     name: notifications-service
   cloud:
     consul:
-      host: localhost          # Адрес Consul (по умолчанию localhost)
-      port: 8500               # Порт Consul (8500 по умолчанию)
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: 8500
       discovery:
         service-name: notifications-service
       config:
-        enabled: true            # Включаем Consul Config для внешней конфигурации
-        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
-        defaultContext: application  # Контекст по умолчанию
-
+        enabled: true
+        prefix: config
+        defaultContext: application
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -20,6 +19,11 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/bank-app-realm}
 
 server:
   port: ${SERVER_PORT:8082}
@@ -32,10 +36,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8080/realms/bank-app-realm

@@ -6,7 +6,7 @@ spring:
     name: gateway-service
   cloud:
     consul:
-      host: localhost          # Адрес Consul (по умолчанию localhost)
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
       port: 8500               # Порт Consul (8500 по умолчанию)
       discovery:
         service-name: gateway-service
@@ -20,25 +20,25 @@ spring:
       routes:
         # Accounts
         - id: accounts-route
-          uri: http://accounts-service:8081 # Имя из docker-compose
+          uri: lb://accounts-service
           predicates:
             - Path=/api/accounts/**
 
         # Notifications
         - id: notifications-route
-          uri: http://notifications-service:8082
+          uri: lb://notifications-service
           predicates:
             - Path=/api/notifications/**
 
         # Transfer
         - id: transfer-route
-          uri: http://transfer-service:8083
+          uri: lb://transfer-service
           predicates:
             - Path=/transfer/**
 
         # Cash
         - id: cash-route
-          uri: http://cash-service:8084
+          uri: lb://cash-service
           predicates:
             - Path=/cash/**
 

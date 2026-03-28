@@ -3,7 +3,7 @@ spring:
     name: accounts-service
   cloud:
     consul:
-      host: localhost          # Адрес Consul (по умолчанию localhost)
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
       port: 8500               # Порт Consul (8500 по умолчанию)
       discovery:
         service-name: accounts-service
