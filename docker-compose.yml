@@ -23,6 +23,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - microservices-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.0
@@ -32,6 +34,8 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     ports:
       - "8080:8080"
+    networks:
+      - microservices-network
 
   # --- Микросервисы ---
   gateway-service:
@@ -40,10 +44,14 @@ services:
       - "8000:8080"
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=gateway-service
+      - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
       - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
     depends_on:
       - keycloak
       - consul
+    networks:
+      - microservices-network
 
   accounts-service:
     build: ./accounts-service
@@ -65,6 +73,8 @@ services:
         condition: service_started
       consul:
         condition: service_started
+    networks:
+      - microservices-network
 
   notifications-service:
     build: ./notifications-service
@@ -85,6 +95,8 @@ services:
         condition: service_started
       consul:
         condition: service_started
+    networks:
+      - microservices-network
 
   transfer-service:
     build: ./transfer-service
@@ -93,10 +105,12 @@ services:
       - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
       - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
-      - CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
+      - TRANSFER_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
     depends_on:
       - accounts-service
       - consul
+    networks:
+      - microservices-network
 
   cash-service:
     build: ./cash-service
@@ -109,3 +123,9 @@ services:
     depends_on:
       - accounts-service
       - consul
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge

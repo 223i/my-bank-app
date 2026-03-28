@@ -8,8 +8,10 @@ import com.iron.mybankfront.controller.dto.AccountDto;
 import com.iron.mybankfront.controller.dto.CashAction;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Заглушка.
@@ -24,22 +26,10 @@ public class AccountStub {
     private int sum = 100;
 
     private final List<AccountDto> accounts = List.of(
-            new AccountDto("petrov", "Петров Петр"),
-            new AccountDto("sidorov", "Сидоров Сидор")
+            new AccountDto("petrov", "Петров Петр", OffsetDateTime.now(), 1000L, List.of()),
+            new AccountDto("sidorov", "Сидоров Сидор", OffsetDateTime.now(), 2000L, List.of())
     );
 
-    public String getByLogin(String login) {
-        return accounts.stream()
-                .filter(account -> account.login().equals(login))
-                .map(AccountDto::name)
-                .findFirst()
-                .get();
-    }
-
-    public void setNameAndBirthdate(String name, LocalDate birthdate) {
-        this.name = name;
-        this.birthdate = birthdate;
-    }
 
     public void editCash(Model model, int value, CashAction action) {
         if (action == CashAction.GET && sum < value) {
@@ -59,6 +49,14 @@ public class AccountStub {
         }
 
         return "main";
+    }
+
+    public String getByLogin(String login) {
+        return accounts.stream()
+                .filter(account -> account.login().equals(login))
+                .findFirst()
+                .map(AccountDto::name)
+                .orElse("Неизвестный клиент");
     }
 
     public void fillModel(Model model, @Nullable List<String> errors, @Nullable String info) {

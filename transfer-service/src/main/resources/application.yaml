@@ -11,6 +11,8 @@ spring:
         enabled: true
         prefix: config
         defaultContext: application
+  config:
+    import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
