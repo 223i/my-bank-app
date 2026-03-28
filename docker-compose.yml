@@ -1,0 +1,71 @@
+services:
+  # --- Инфраструктура ---
+  common-db:
+    image: postgres:16
+    container_name: common-db
+    environment:
+      POSTGRES_DB: ${COMMON_DB_NAME}
+      POSTGRES_USER: ${COMMON_DB_USERNAME}
+      POSTGRES_PASSWORD: ${COMMON_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    command: start-dev
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+
+  # --- Микросервисы ---
+  gateway-service:
+    build: ./gateway-service
+    ports:
+      - "8000:8080"
+    environment:
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+    depends_on:
+      - keycloak
+
+  accounts-service:
+    build: ./accounts-service
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+    depends_on:
+      common-db:
+        condition: service_healthy
+
+  notifications-service:
+    build: ./notifications-service
+    environment:
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+    depends_on:
+      - keycloak
+
+  transfer-service:
+    build: ./transfer-service
+    environment:
+      - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
+      - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_TRANSFER_CLIENT_REG_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
+    depends_on:
+      - accounts-service
+
+  cash-service:
+    build: ./cash-service
+    environment:
+      - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
+      - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_CASH_CLIENT_REG_CLIENT_SECRET=${CASH_CLIENT_SECRET}
+    depends_on:
+      - accounts-service

@@ -11,25 +11,25 @@ spring:
       routes:
         # Accounts
         - id: accounts-route
-          uri: http://localhost:8081
+          uri: http://accounts-service:8081 # Имя из docker-compose
           predicates:
             - Path=/api/accounts/**
 
         # Notifications
         - id: notifications-route
-          uri: http://localhost:8082
+          uri: http://notifications-service:8082
           predicates:
             - Path=/api/notifications/**
 
         # Transfer
         - id: transfer-route
-          uri: http://localhost:8083
+          uri: http://transfer-service:8083
           predicates:
             - Path=/transfer/**
 
         # Cash
         - id: cash-route
-          uri: http://localhost:8084
+          uri: http://cash-service:8084
           predicates:
             - Path=/cash/**
 
@@ -37,4 +37,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/my-bank-app
+          issuer-uri: http://keycloak:8080/realms/my-bank-app
+      client:
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak:8080/realms/my-bank-app
