@@ -26,8 +26,8 @@ public class AccountStub {
     private int sum = 100;
 
     private final List<AccountDto> accounts = List.of(
-            new AccountDto("petrov", "Петров Петр", OffsetDateTime.now(), 1000L, List.of()),
-            new AccountDto("sidorov", "Сидоров Сидор", OffsetDateTime.now(), 2000L, List.of())
+            new AccountDto("petrov", "Петров Петр", OffsetDateTime.now(), 500L, List.of()),
+            new AccountDto("sidorov", "Сидоров Сидор", OffsetDateTime.now(), 300L, List.of())
     );
 
 
@@ -51,12 +51,12 @@ public class AccountStub {
         return "main";
     }
 
-    public String getByLogin(String login) {
+    private String getByLogin(String login) {
         return accounts.stream()
                 .filter(account -> account.login().equals(login))
                 .findFirst()
                 .map(AccountDto::name)
-                .orElse("Неизвестный клиент");
+                .orElse(login);
     }
 
     public void fillModel(Model model, @Nullable List<String> errors, @Nullable String info) {
