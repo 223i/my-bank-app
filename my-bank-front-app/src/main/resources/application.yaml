@@ -1,6 +1,20 @@
 spring:
   application:
     name: my-bank-front-app
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: my-bank-front-app
+            client-secret: frontend-secret
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8083/login/oauth2/code/keycloak
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/bank-app-realm
+            user-name-attribute: preferred_username
   cloud:
     consul:
       host: 127.0.0.1
