@@ -17,6 +17,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/api/notifications/**").hasAuthority("ROLE_NOTIFICATIONS_USER")
                         .anyRequest().authenticated()
                 )

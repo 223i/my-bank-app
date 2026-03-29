@@ -7,6 +7,13 @@ spring:
       port: 8500
       discovery:
         service-name: notifications-service
+        enabled: true
+        register: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        prefer-ip-address: false
+        instance-id: ${spring.application.name}:${random.value}
+        hostname: ${spring.application.name}
       config:
         enabled: true
         prefix: config

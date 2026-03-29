@@ -16,7 +16,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // ТОЛЬКО сервис Transfer может дергать методы изменения балланса
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/api/accounts/*/decrease-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .requestMatchers("/api/accounts/*/increase-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .anyRequest().authenticated()
