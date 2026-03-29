@@ -38,6 +38,11 @@ services:
       - ./bank-app-realm.json:/opt/keycloak/data/import/bank-app-realm.json
     networks:
       - microservices-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/live" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # --- Микросервисы ---
   gateway-service:
@@ -136,6 +141,12 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=my-bank-front-app
       - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
+        # адрес для скачивания метаданных (внутри Docker)
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+        # адрес будет в браузер для логина
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI=http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/auth
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID=my-bank-front-app
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET=${FRONTEND_CLIENT_SECRET}
       - SERVER_PORT=8083
     depends_on:
       gateway-service:

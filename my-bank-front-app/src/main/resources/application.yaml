@@ -6,29 +6,37 @@ spring:
       client:
         registration:
           keycloak:
-            client-id: my-bank-front-app
-            client-secret: frontend-secret
-            scope: openid,profile,email
-            authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8083/login/oauth2/code/keycloak
+            client-id: ${OAUTH2_CLIENT_ID:my-bank-front-app}
+            client-secret: ${FRONTEND_CLIENT_SECRET:frontend-secret-default}
+            scope: ${OAUTH2_CLIENT_SCOPE:openid,profile,email,roles}
+            authorization-grant-type: ${OAUTH2_GRANT_TYPE:authorization_code}
+            redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:8083/login/oauth2/code/keycloak}
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/bank-app-realm
+            issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/bank-app-realm}
             user-name-attribute: preferred_username
   cloud:
     consul:
-      host: 127.0.0.1
-      port: 8500
+      enabled: ${CONSUL_ENABLED:false}
+      host: ${CONSUL_HOST:127.0.0.1}
+      port: ${CONSUL_PORT:8500}
       discovery:
-        enabled: true
-        register: true
+        enabled: ${CONSUL_DISCOVERY_ENABLED:false}
+        register: ${CONSUL_REGISTER:false}
         health-check-path: /actuator/health
         instance-id: ${spring.application.name}:${random.value}
         hostname: ${spring.application.name}
         service-name: my-bank-front-app
+        prefer-ip-address: ${CONSUL_PREFER_IP:false}
       config:
-        enabled: true            # ???????? Consul Config ??? ??????? ????????????
-        prefix: config           # ??????? ? KV-????????? Consul (?? ????????? "config")
-        defaultContext: application  # ???????? ?? ?????????
-  config:
-    import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
+        enabled: ${CONSUL_CONFIG_ENABLED:false}
+        prefix: config
+        defaultContext: application
+
+server:
+  port: ${SERVER_PORT:8083}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
