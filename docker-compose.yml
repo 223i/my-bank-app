@@ -126,6 +126,33 @@ services:
     networks:
       - microservices-network
 
+  my-bank-front-app:
+    build: ./my-bank-front-app
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=my-bank-front-app
+      - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
+      - SERVER_PORT=8083
+    depends_on:
+      gateway-service:
+        condition: service_started
+      accounts-service:
+        condition: service_started
+      notifications-service:
+        condition: service_started
+      transfer-service:
+        condition: service_started
+      cash-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+      consul:
+        condition: service_started
+    networks:
+      - microservices-network
+
 networks:
   microservices-network:
     driver: bridge
