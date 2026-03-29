@@ -478,6 +478,36 @@
   "webAuthnPolicyPasswordlessExtraOrigins": [],
   "users": [
     {
+      "id": "4db9a1b5-a69e-4045-9ebb-e32f2f0c3e25",
+      "username": "jdoe",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "jdoe@example.com",
+      "emailVerified": false,
+      "createdTimestamp": 1774798663010,
+      "enabled": true,
+      "totp": false,
+      "credentials": [
+        {
+          "id": "1e217ac3-1b3b-4489-9a70-729e2931d4d5",
+          "type": "password",
+          "userLabel": "My password",
+          "createdDate": 1774798678690,
+          "secretData": "{\"value\":\"xp3AwHuIPP/2DwR1xfoEp2Cm9Pwt5WbqnVuitqXAw8Prb4eDQ90ZXVtrmFgEzEG4v19O+zU/zLHL24z6ZtAG2w==\",\"salt\":\"+cup0N2hUJRMs9qLE2Lk9Q==\",\"additionalParameters\":{}}",
+          "credentialData": "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+        }
+      ],
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-bank-app-realm",
+        "ROLE_NOTIFICATIONS_USER",
+        "ROLE_ACCOUNTS_INTERNAL"
+      ],
+      "notBefore": 0,
+      "groups": []
+    },
+    {
       "id": "22aec443-0461-45fb-81a7-ab706d7c1b95",
       "username": "service-account-accounts-service-client",
       "emailVerified": false,
@@ -485,6 +515,7 @@
       "enabled": true,
       "totp": false,
       "serviceAccountClientId": "accounts-service-client",
+      "credentials": [],
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
@@ -502,6 +533,7 @@
       "enabled": true,
       "totp": false,
       "serviceAccountClientId": "cash-service-client",
+      "credentials": [],
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
@@ -520,6 +552,7 @@
       "enabled": true,
       "totp": false,
       "serviceAccountClientId": "my-bank-front-app",
+      "credentials": [],
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
@@ -536,6 +569,7 @@
       "enabled": true,
       "totp": false,
       "serviceAccountClientId": "transfer-service-client",
+      "credentials": [],
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
@@ -984,11 +1018,20 @@
       "frontchannelLogout": true,
       "protocol": "openid-connect",
       "attributes": {
-        "oidc.ciba.grant.enabled": "false",
+        "client.secret.creation.time": "1774798093",
+        "post.logout.redirect.uris": "+",
         "oauth2.device.authorization.grant.enabled": "false",
-        "client.secret.creation.time": "1774796444",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "use.refresh.tokens": "true",
+        "oidc.ciba.grant.enabled": "false",
+        "client.use.lightweight.access.token.enabled": "false",
         "backchannel.logout.session.required": "true",
-        "backchannel.logout.revoke.offline.tokens": "false"
+        "client_credentials.use_refresh_token": "false",
+        "tls.client.certificate.bound.access.tokens": "false",
+        "require.pushed.authorization.requests": "false",
+        "acr.loa.map": "{}",
+        "display.on.consent.screen": "false",
+        "token.response.type.bearer.lower-case": "false"
       },
       "authenticationFlowBindingOverrides": {},
       "fullScopeAllowed": true,
@@ -1003,6 +1046,7 @@
           "config": {
             "user.session.note": "clientAddress",
             "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "clientAddress",
@@ -1018,6 +1062,7 @@
           "config": {
             "user.session.note": "clientHost",
             "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "clientHost",
@@ -1033,6 +1078,7 @@
           "config": {
             "user.session.note": "client_id",
             "introspection.token.claim": "true",
+            "userinfo.token.claim": "true",
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "client_id",
@@ -1848,14 +1894,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
-            "saml-user-property-mapper",
-            "oidc-usermodel-property-mapper",
-            "oidc-usermodel-attribute-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "oidc-address-mapper",
             "saml-role-list-mapper",
-            "saml-user-attribute-mapper",
-            "oidc-full-name-mapper"
+            "oidc-address-mapper",
+            "oidc-usermodel-property-mapper",
+            "oidc-full-name-mapper",
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-attribute-mapper",
+            "saml-user-property-mapper",
+            "saml-user-attribute-mapper"
           ]
         }
       },
@@ -1926,14 +1972,14 @@
         "subComponents": {},
         "config": {
           "allowed-protocol-mapper-types": [
+            "oidc-sha256-pairwise-sub-mapper",
+            "oidc-usermodel-property-mapper",
+            "oidc-usermodel-attribute-mapper",
             "saml-user-attribute-mapper",
             "oidc-address-mapper",
             "oidc-full-name-mapper",
-            "oidc-usermodel-property-mapper",
             "saml-role-list-mapper",
-            "oidc-sha256-pairwise-sub-mapper",
-            "saml-user-property-mapper",
-            "oidc-usermodel-attribute-mapper"
+            "saml-user-property-mapper"
           ]
         }
       },
@@ -1953,6 +1999,12 @@
         "providerId": "rsa-enc-generated",
         "subComponents": {},
         "config": {
+          "privateKey": [
+            "MIIEowIBAAKCAQEA0VcU/VpJlaVNYzJcgJLG4jWMJ+uWUtKTES1W3tTHRKl4Lu/YpjqsIF/vg6JuSodOzUD45Lk5qmUxkKqAIP4L78NGCEvj30lOI1nBq/kTqUvbAfPguGoYqjDTHGNUvHW3SAqJ7kPmBZxDhOFEA/JPTpkevclM6gyaZQ/KzvxNCQse7OLcR7+eo6Rk3PR2973yhIhZ76Golr8BDYkWHgX/fRO27c2wIQtRp87fz/ldSsbbwptiPqIyyEqYJpZjxqbZlUEXRpAUUgg2nbFiL5SaeINMARybSJXOKOe6QuOFR2ZYaZOJDbqjFGc0agELwhfjOXO9UDoHoOrXtij/TWQo1wIDAQABAoIBADjH1fmiM7NTUtpFHrIBHdDdlVZ+oBd25k0Sby2hqSsGjIKuq6Tq5SUi4GRj+mZcrRMfPGNNmkaNjBQhKv/H6JTv8l7ttrEpwPf1sIJk3OBeoti0vY9Ht8jx1VEt4B3+D+iKcz8dS5bZ+7ZfI4OuhbRb8+qmXyZcpMQktG3QIVUCIZpF6UArff1WSN4lS0f7C4jwLeztHTiN9prIqpkUCt5Wtx8u1YlZkabQbMtDHBcxtbo7/g9RAb9xSSEqXhWNeV3hQhNipL/IhIDy1ih7E+ATqtKip4GpJKmx3h/i80OFt8kT3CZ+8l/ixU2Z54tWu/mppPNzy/MH+gYP2UTSTgECgYEA6e7/ns6jzpguOLwfVqZbqDANHV+v0o18BvUp9BZcJx0BOgg7v+jVXwMWUJYaYgimPmtYYFAwfqxZldrr6ew72Z6V99c4c7kKO7KXc9NHOt95aHE/38bwsA0ip9uCesduop33U6Yklr2zUFuUEoitxvwejZixMG47nRbNhGKFA7ECgYEA5RY0TFztwSuoxq2lwPZGlsXpR6oNzTLOoBqvtBfQCeHHD5de8mfr0tbsWkp2fnN4OD5Z7i6+4UP9ygl78PupsMPShpj7HEzC7hvYY3ufOeDSbi+U7ME7fidtZgWqCi0dzCnqeiboaXJHhGzpGPJ4D4+DSnzhj+Ygo7lAwr4AvwcCgYA/Eb1/Dk0hlOvZRfbZAK7zcEkI41Re2uBWa+Csux6LOQmsoK2jNt3X6NgqT927EoPnjj9ccCIy9LqOaWBzR8p3CId8M1037epxX9vvUUYB/GAaJXZIGbWocVInmUnbWktcsmQM/F0e+vQONTJ9sLXRUQXXvRQAb6fI2W39RCaCcQKBgQC/jFdiWnl6AZV3uo5T0BipzQYHpAsyPn9Co82yWg7blGsrgDglm/s1KfwqawS1Kruk2426eF+mX4F/Q3rcvrDeWn5XiOa+fPiou6OtWxqB/Jg3BZYSeGfUTgdNPQM2yw6VPZ8PUCUYtjNSaPZmo6b769WtnMnF1ngILcgWjWR2VQKBgEvuf88868kB+0Ic6dhPImOmi38mq7KMJHh7XljUfXn5Q+2VYytBjHYsgK6Rt4Wwb3ZRwu3Cq98cgh27ZViDURT5tnQUf+AUchNPgvdQcU2uM1bb5xFhl0py8zoTkxSmJPUOqLHLx4yKMGYg5rJVa5EIxQaAumFuJzYjttwwauNW"
+          ],
+          "certificate": [
+            "MIICqzCCAZMCBgGdOjrk8jANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDDA5iYW5rLWFwcC1yZWFsbTAeFw0yNjAzMjkxNTMyMTFaFw0zNjAzMjkxNTMzNTFaMBkxFzAVBgNVBAMMDmJhbmstYXBwLXJlYWxtMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0VcU/VpJlaVNYzJcgJLG4jWMJ+uWUtKTES1W3tTHRKl4Lu/YpjqsIF/vg6JuSodOzUD45Lk5qmUxkKqAIP4L78NGCEvj30lOI1nBq/kTqUvbAfPguGoYqjDTHGNUvHW3SAqJ7kPmBZxDhOFEA/JPTpkevclM6gyaZQ/KzvxNCQse7OLcR7+eo6Rk3PR2973yhIhZ76Golr8BDYkWHgX/fRO27c2wIQtRp87fz/ldSsbbwptiPqIyyEqYJpZjxqbZlUEXRpAUUgg2nbFiL5SaeINMARybSJXOKOe6QuOFR2ZYaZOJDbqjFGc0agELwhfjOXO9UDoHoOrXtij/TWQo1wIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAEpqkUMCr0MbK4bJkmtK+G8Lmpwz+cRXHYidbNtUDKFXWoblKckUBJdJ/8u2tvpcmtWp2py1kv51e2r1n97IXe69pZ2wm347GGBktdiNNYFyWxz0R9UFk3BEVWGzXCjIbv61Ns3Ojvabhj0yrpOKz4qaW1bGLeV4xUbD1bLRmD5feQS9t2mQSghTa19k6TxfUYrZGrKCw9TebYvnPNJ0JR6bfFuYhi0eGvDSHQr4iJLdX84ypkPFx7dSP8v1dgYTka1nMe5kzwC3fiabt2QJszB7/+G1k8wpmmKPX9Lw77BTMsRJYDLVpiPOGx1I2xbcX20oLA+nPLVIUVTz92ChWV"
+          ],
           "priority": [
             "100"
           ],
@@ -1967,6 +2019,12 @@
         "providerId": "rsa-generated",
         "subComponents": {},
         "config": {
+          "privateKey": [
+            "MIIEogIBAAKCAQEAuRcBXXL6M6TpVCh7z3x6DiGTvGiQmjQIejJ6qPle4ofN9KtUblOHeSDLESBxEhunLGzADMaertaIbhPk6chSyQQ2r5F++Fbnq1O7dv0bigSODH24VlEZ5n1EbJdKV2E2hbpbpzaU5cC4BUIC2EtGs0PIYi5ejTzZ7ne0zKSzPxso45ICCHR2jTGJQbKEFiw+ER0Y4ov0VcPWPbZ2Z5VaxnRWrs54Ef2VXcSntVTC/HHgtJ/GkJstISYyB3QqXl/wnESuEzeWPSeeCegpXXmtvcPo/4uuDh33zJeHZ/OeXlpA75gWuEJu5tfl5LsRJ6RU7d6kV1glw5C6ZneFIQnK4wIDAQABAoH/L1szfjVszsni6SVyiCPRFsyAgDRAyzOE977yo0kqfctBZthvQcsdXmCFlFw4kemBXFx2xs4Ky7EYNxHf//DBPa1WUJVpZyDVJYDG9irMYQPJVGjWQT9+4PosB5yt6K12xcBost/EOQSWEMJS+ARKkpNFMdmrV3e6SslV+QYq1nosBBv8ng6Hzimfx1JCBj+nFLmv4nM84TqqDrTvnJAxzTs7UwLUlgVNpvplAfq7tCA6TZyDIRUijgNvbXbxK33JcOcZ9R251BWMxUiafiKhRN1vzEKHVKVHPbrWIldb0VAdO+GtuWHE2UgLt8d7vOK8lP537ITBdYXPI3dGzDjxAoGBAPop4nJvFCDaxOWOuH/trB9VB8phqcQ3emv5ZQ+J+WuUWWOevzfazkv841TTybz9tYj+kvgX9h25ijK7RRVhUe+jMiYgtCpx24BpEJRZN9Rfliv/RiFmmrHqwiV5GQPhrUIwVWowg5OMbc/exHvVxJZoCg2nj38UdmwiukHBtrrRAoGBAL1oduDKD6JzIqfWXYmliyc3rK/IpxVslXTfNB1Q6OfoIqK5IDvtgcuiORRm68qnWPJevWfpnio6FTJWWKEqQu+mQUQYv0jVz4XEqyCjkX3lCcI6IRkAuZCVlouAuWkC2EEBuESLatpzn0L498A+2Ab0UXXJPTN5QFdny0ZAD69zAoGBAMKQLuGniLUg0QBlJxPAKx1XSa7alGnaaClwF2yld8p236r+PWRYlhg9gCVqbr3BaR46ON4h7LYjpttcERfW0B4cBBXpW5ajZP+TN2TZmvVevnJLoSS7I1d66TKx44XEULdo1hW3062/C20fqhtSIAqGskL6bj19Ebl6rPgVjGPxAoGAPaSO8++vEO6pu7ffb1nKJPRQplEGV8mkBopR+qyHcFozU4QugnJ0yKI+M26flK/MGe1NdVEp4ZJPrbc+Vw1bBYW1PgVT08+KH333N8MkKbXt7CFg/jMnMXANs88sCIodeWKm5t/84aW5kmFWuGF7ix/elxfsbCEtGIU2OeHFeRMCgYEA44HbTQgDqtoKW+2bW3UXU62+U80HZ9qDHN2CqJodSC+V3zGnD/9C5ncK/LlkJqfEs41sdIJn1iUBjQ+gmjVoELNVZBZLBVxetbsWDqZRKODAcABcLmXxs3L5v0nK13HVPlT/Epy1oEI/MIDnSQHFr3qC8JQVmqhlm/jH+56P/Jw="
+          ],
+          "certificate": [
+            "MIICqzCCAZMCBgGdOjrlTjANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDDA5iYW5rLWFwcC1yZWFsbTAeFw0yNjAzMjkxNTMyMTFaFw0zNjAzMjkxNTMzNTFaMBkxFzAVBgNVBAMMDmJhbmstYXBwLXJlYWxtMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuRcBXXL6M6TpVCh7z3x6DiGTvGiQmjQIejJ6qPle4ofN9KtUblOHeSDLESBxEhunLGzADMaertaIbhPk6chSyQQ2r5F++Fbnq1O7dv0bigSODH24VlEZ5n1EbJdKV2E2hbpbpzaU5cC4BUIC2EtGs0PIYi5ejTzZ7ne0zKSzPxso45ICCHR2jTGJQbKEFiw+ER0Y4ov0VcPWPbZ2Z5VaxnRWrs54Ef2VXcSntVTC/HHgtJ/GkJstISYyB3QqXl/wnESuEzeWPSeeCegpXXmtvcPo/4uuDh33zJeHZ/OeXlpA75gWuEJu5tfl5LsRJ6RU7d6kV1glw5C6ZneFIQnK4wIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQCEMG0rdEvhd+C/QJgxg/cDSjv8dNcmhE04Y1aWoK/0Yct/8d5FwmLvNSafsNse9TyY5/yrk8STrxEFpDLtJcYGUDUR1cnbJM3NzcbBCWqU9WfOj7NV5EcMGVDSsdATirRipuy7QVDFoYFv/gERXdkZ04vrK6fMdkA8NR/OldzDcIF/HWGuSwhtxq0jSLjnMBQznzyfupnPvq9AjrSreVoWxUsR5PIAnfcyfu882Ulr2hNa8SuPQyB6yjmlgme9+fT4mVp7IiJ4zK1laGQsnC4ZuDcn9IgVzshE5jNxaJvYJwuJCmOR04pPxuPzMa9qNz95+GTcus1BZJgetNCzHJZ3"
+          ],
           "priority": [
             "100"
           ]
@@ -1978,6 +2036,12 @@
         "providerId": "hmac-generated",
         "subComponents": {},
         "config": {
+          "kid": [
+            "83d67b2c-7701-4a2b-a51c-05b64b42a1ba"
+          ],
+          "secret": [
+            "p1xjROLIztmTsGidOmeVGxy2dDPhHjUYmLvdZrxqOhoJl-6odfLZHU-ATfagq9yVom1ZkhFvORVsbjO5gyeWdqvj36OflUnl1AQAzGqO2Ytp3U0vWoHbtxou0VLiAFr-YhdQxBCpga3i_4bNHk00MQE9We4VsOWlHd00j4M8TTc"
+          ],
           "priority": [
             "100"
           ],
@@ -1992,6 +2056,12 @@
         "providerId": "aes-generated",
         "subComponents": {},
         "config": {
+          "kid": [
+            "34bc48a8-4cb2-4d09-8db6-0add719f8e49"
+          ],
+          "secret": [
+            "qLdGDxo1lHFYkdZI-pax6g"
+          ],
           "priority": [
             "100"
           ]
@@ -2561,7 +2631,7 @@
       "alias": "UPDATE_PASSWORD",
       "name": "Update Password",
       "providerId": "UPDATE_PASSWORD",
-      "enabled": true,
+      "enabled": false,
       "defaultAction": false,
       "priority": 30,
       "config": {}
@@ -2570,7 +2640,7 @@
       "alias": "UPDATE_PROFILE",
       "name": "Update Profile",
       "providerId": "UPDATE_PROFILE",
-      "enabled": true,
+      "enabled": false,
       "defaultAction": false,
       "priority": 40,
       "config": {}

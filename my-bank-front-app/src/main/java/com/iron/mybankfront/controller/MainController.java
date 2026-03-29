@@ -4,8 +4,7 @@ import com.iron.mybankfront.controller.dto.AccountDto;
 import com.iron.mybankfront.controller.dto.AccountUpdateDto;
 import com.iron.mybankfront.controller.dto.CashAction;
 import com.iron.mybankfront.service.GatewayService;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.iron.mybankfront.util.JwtTokenUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -42,9 +42,11 @@ import java.util.List;
 public class MainController {
 
     private final GatewayService gatewayService;
+    private final JwtTokenUtil jwtTokenUtil;
 
-    public MainController(GatewayService gatewayService) {
+    public MainController(GatewayService gatewayService, JwtTokenUtil jwtTokenUtil) {
         this.gatewayService = gatewayService;
+        this.jwtTokenUtil = jwtTokenUtil;
     }
 
     /**
@@ -60,12 +62,24 @@ public class MainController {
     @GetMapping("/account")
     public String getAccount(Model model, Principal principal) {
 
-        String login = principal.getName();
+        String login = jwtTokenUtil.getCurrentUserLogin();
+        Collection<String> userRoles = jwtTokenUtil.getUserRoles();
+
         AccountDto accountDto = gatewayService.getAccountInfo(login);
         model.addAttribute("name", accountDto.name());
         model.addAttribute("birthdate", accountDto.birthday().format(DateTimeFormatter.ISO_DATE));
         model.addAttribute("sum", accountDto.sum());
         model.addAttribute("accounts", accountDto.accounts());
+
+        // Add JWT token information to model
+        model.addAttribute("currentUser", login);
+        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
+        model.addAttribute("userRoles", userRoles);
+        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
+        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
+        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
+        model.addAttribute("jwtToken", jwtTokenUtil.getJwtToken());
+
         return "main";
     }
 
@@ -94,6 +108,13 @@ public class MainController {
         model.addAttribute("sum", updated.sum());
         model.addAttribute("accounts", updated.accounts());
 
+        model.addAttribute("currentUser", jwtTokenUtil.getCurrentUserLogin());
+        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
+        model.addAttribute("userRoles", jwtTokenUtil.getUserRoles());
+        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
+        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
+        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
+
         return "main";
     }
 
@@ -110,8 +131,7 @@ public class MainController {
      */
     @PostMapping("/cash")
     public String editCash(Model model, @RequestParam("value") int value, @RequestParam("action") CashAction action) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String login = auth.getName();
+        String login = jwtTokenUtil.getCurrentUserLogin();
 
         try {
             AccountDto updated = gatewayService.changeCashInfo(value, action);
@@ -128,6 +148,13 @@ public class MainController {
             model.addAttribute("accounts", current.accounts());
             model.addAttribute("errors", List.of("Недостаточно средств на счету"));
         }
+
+        model.addAttribute("currentUser", login);
+        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
+        model.addAttribute("userRoles", jwtTokenUtil.getUserRoles());
+        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
+        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
+        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
 
         return "main";
     }
@@ -149,8 +176,7 @@ public class MainController {
             @RequestParam("value") int value,
             @RequestParam("login") String login
     ) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentLogin = auth.getName();
+        String currentLogin = jwtTokenUtil.getCurrentUserLogin();
 
         try {
             AccountDto updated = gatewayService.transfer(value, login);
@@ -167,6 +193,14 @@ public class MainController {
             model.addAttribute("accounts", current.accounts());
             model.addAttribute("errors", List.of("Недостаточно средств на счету"));
         }
+
+        // Add JWT token information to model
+        model.addAttribute("currentUser", currentLogin);
+        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
+        model.addAttribute("userRoles", jwtTokenUtil.getUserRoles());
+        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
+        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
+        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
 
         return "main";
     }

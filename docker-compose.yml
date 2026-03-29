@@ -140,11 +140,12 @@ services:
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=my-bank-front-app
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_AUTHENTICATION_METHOD=client_secret_post
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/userinfo
       - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
-        # адрес для скачивания метаданных (внутри Docker)
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
-        # адрес будет в браузер для логина
       - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI=http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/auth
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID=my-bank-front-app
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET=${FRONTEND_CLIENT_SECRET}
       - SERVER_PORT=8083
