@@ -16,13 +16,15 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/login", "/error", "/api/public").permitAll()
+                .requestMatchers("/", "/error", "/api/public", "/login/oauth2/code/**").permitAll()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/oauth2/authorization/keycloak")
                 .defaultSuccessUrl("/account", true)
-                .failureUrl("/login?error=true")
+                .failureHandler((request, response, exception) -> {
+                    response.sendRedirect("/");
+                })
             )
             .logout(logout -> logout
                 .logoutSuccessUrl("/")

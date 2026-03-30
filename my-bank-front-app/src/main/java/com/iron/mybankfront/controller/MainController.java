@@ -58,7 +58,6 @@ public class MainController {
         return "redirect:/account";
     }
 
-
     @GetMapping("/account")
     public String getAccount(Model model, Principal principal) {
 
@@ -72,13 +71,13 @@ public class MainController {
         model.addAttribute("accounts", accountDto.accounts());
 
         // Add JWT token information to model
-        model.addAttribute("currentUser", login);
-        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
-        model.addAttribute("userRoles", userRoles);
-        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
-        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
-        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
-        model.addAttribute("jwtToken", jwtTokenUtil.getJwtToken());
+//        model.addAttribute("currentUser", login);
+//        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
+//        model.addAttribute("userRoles", userRoles);
+//        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
+//        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
+//        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
+//        model.addAttribute("jwtToken", jwtTokenUtil.getJwtToken());
 
         return "main";
     }
