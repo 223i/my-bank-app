@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
 
@@ -67,7 +66,7 @@ public class MainController {
 
         AccountDto accountDto = gatewayService.getAccountInfo(login);
         model.addAttribute("name", accountDto.name());
-        model.addAttribute("birthdate", accountDto.birthday().format(DateTimeFormatter.ISO_DATE));
+        model.addAttribute("birthdate", accountDto.birthday().toLocalDate().toString());
         model.addAttribute("sum", accountDto.sum());
         model.addAttribute("accounts", accountDto.accounts());
 
@@ -102,7 +101,7 @@ public class MainController {
         AccountUpdateDto toBeUpdated = new AccountUpdateDto(name, birthdate);
         AccountDto updated = gatewayService.changeAccountInfo(toBeUpdated);
         model.addAttribute("name", updated.name());
-        model.addAttribute("birthdate", updated.birthday().format(DateTimeFormatter.ISO_DATE));
+        model.addAttribute("birthdate", updated.birthday().toLocalDate().toString());
         model.addAttribute("sum", updated.sum());
         model.addAttribute("accounts", updated.accounts());
 
@@ -134,14 +133,14 @@ public class MainController {
         try {
             AccountDto updated = gatewayService.changeCashInfo(value, action);
             model.addAttribute("name", updated.name());
-            model.addAttribute("birthdate", updated.birthday().format(DateTimeFormatter.ISO_DATE));
+            model.addAttribute("birthdate", updated.birthday().toLocalDate().toString());
             model.addAttribute("sum", updated.sum());
             model.addAttribute("accounts", updated.accounts());
             model.addAttribute("info", action == CashAction.GET ? "Снято %d руб".formatted(value) : "Положено %d руб".formatted(value));
         } catch (Exception e) {
             AccountDto current = gatewayService.getAccountInfo(login);
             model.addAttribute("name", current.name());
-            model.addAttribute("birthdate", current.birthday().format(DateTimeFormatter.ISO_DATE));
+            model.addAttribute("birthdate", current.birthday().toLocalDate().toString());
             model.addAttribute("sum", current.sum());
             model.addAttribute("accounts", current.accounts());
             model.addAttribute("errors", List.of("Недостаточно средств на счету"));
@@ -179,14 +178,14 @@ public class MainController {
         try {
             AccountDto updated = gatewayService.transfer(value, login);
             model.addAttribute("name", updated.name());
-            model.addAttribute("birthdate", updated.birthday().format(DateTimeFormatter.ISO_DATE));
+            model.addAttribute("birthdate", updated.birthday().toLocalDate().toString());
             model.addAttribute("sum", updated.sum());
             model.addAttribute("accounts", updated.accounts());
             model.addAttribute("info", "Успешно переведено %d руб клиенту %s".formatted(value, login));
         } catch (Exception e) {
             AccountDto current = gatewayService.getAccountInfo(currentLogin);
             model.addAttribute("name", current.name());
-            model.addAttribute("birthdate", current.birthday().format(DateTimeFormatter.ISO_DATE));
+            model.addAttribute("birthdate", current.birthday().toLocalDate().toString());
             model.addAttribute("sum", current.sum());
             model.addAttribute("accounts", current.accounts());
             model.addAttribute("errors", List.of("Недостаточно средств на счету"));

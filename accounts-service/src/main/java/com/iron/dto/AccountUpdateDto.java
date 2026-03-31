@@ -2,7 +2,7 @@ package com.iron.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -14,6 +14,6 @@ public class AccountUpdateDto {
     private String name;
 
     @NotNull(message = "Birthday is required")
-    @Past(message = "Birthday must be in the past")
+    @PastOrPresent(message = "Birthday must be in the past or present")
     private LocalDate birthday;
 }

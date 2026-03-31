@@ -112,7 +112,7 @@ class AccountControllerIntegrationTest {
                         .with(jwt().jwt(testJwt))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(testUpdateDto)))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Test User"));
 
