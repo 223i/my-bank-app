@@ -29,6 +29,8 @@ spring:
           uri: lb://accounts-service
           predicates:
             - Path=/api/accounts/**
+          filters:
+            - RewritePath=/api/accounts(?<segment>.*), /account${segment}
 
         - id: notifications-route
           uri: lb://notifications-service
@@ -38,12 +40,16 @@ spring:
         - id: transfer-route
           uri: lb://transfer-service
           predicates:
-            - Path=/transfer/**
+            - Path=/api/transfer/**
+          filters:
+            - RewritePath=/api/transfer(?<segment>.*), /transfer${segment}
 
         - id: cash-route
           uri: lb://cash-service
           predicates:
-            - Path=/cash/**
+            - Path=/api/cash/**
+          filters:
+            - RewritePath=/api/cash(?<segment>.*), /cash${segment}
 
   config:
     import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
@@ -52,4 +58,4 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+          jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
