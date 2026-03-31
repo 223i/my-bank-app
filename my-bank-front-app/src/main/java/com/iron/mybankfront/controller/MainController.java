@@ -5,13 +5,13 @@ import com.iron.mybankfront.controller.dto.AccountUpdateDto;
 import com.iron.mybankfront.controller.dto.CashAction;
 import com.iron.mybankfront.service.GatewayService;
 import com.iron.mybankfront.util.JwtTokenUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -38,6 +38,7 @@ import java.util.List;
  * <p>
  * С примерами использования можно ознакомиться в тестовом классе заглушке AccountStub
  */
+@Slf4j
 @Controller
 public class MainController {
 
@@ -59,8 +60,8 @@ public class MainController {
     }
 
     @GetMapping("/account")
-    public String getAccount(Model model, Principal principal) {
-
+    public String getAccount(Model model) {
+        log.debug("Get account page for login {}", jwtTokenUtil.getCurrentUserLogin());
         String login = jwtTokenUtil.getCurrentUserLogin();
         Collection<String> userRoles = jwtTokenUtil.getUserRoles();
 
@@ -71,13 +72,13 @@ public class MainController {
         model.addAttribute("accounts", accountDto.accounts());
 
         // Add JWT token information to model
-//        model.addAttribute("currentUser", login);
-//        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
-//        model.addAttribute("userRoles", userRoles);
-//        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
-//        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
-//        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
-//        model.addAttribute("jwtToken", jwtTokenUtil.getJwtToken());
+        model.addAttribute("currentUser", login);
+        model.addAttribute("userEmail", jwtTokenUtil.getCurrentUserEmail());
+        model.addAttribute("userRoles", userRoles);
+        model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
+        model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
+        model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
+        model.addAttribute("jwtToken", jwtTokenUtil.getJwtToken());
 
         return "main";
     }

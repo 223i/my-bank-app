@@ -25,6 +25,7 @@ public class AccountController {
     @ResponseStatus(HttpStatus.OK)
     public AccountDto getAccount(@AuthenticationPrincipal Jwt jwt) {
         String login = jwt.getClaimAsString("preferred_username");
+        log.debug("Get account for login {}", login);
         return accountService.getAccount(login);
     }
 

@@ -4,7 +4,7 @@ services:
     image: hashicorp/consul:1.15.4
     container_name: consul
     ports:
-      - "8500:8500" # UI и API (для твоих сервисов)
+      - "8500:8500"
     command: "agent -dev -client=0.0.0.0"
     networks:
       - microservices-network
@@ -46,7 +46,7 @@ services:
           - keycloak-server
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/live" ]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 10
 
@@ -146,7 +146,8 @@ services:
       - "8083:8083"
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
-      - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=my-bank-front-app
+      - CONSUL_ENABLED=true
+      - CONSUL_DISCOVERY_ENABLED=true
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID=my-bank-front-app
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET=${FRONTEND_CLIENT_SECRET}
       - KEYCLOAK_FRONTEND_URL=http://localhost:8080
