@@ -4,13 +4,17 @@ spring:
   cloud:
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
-      port: 8500               # Порт Consul (8500 по умолчанию)
+      port: 8500
       discovery:
         service-name: cash-service
+        enabled: true
+        register: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
       config:
-        enabled: true            # Включаем Consul Config для внешней конфигурации
-        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
-        defaultContext: application  # Контекст по умолчанию
+        enabled: true
+        prefix: config
+        defaultContext: application
   config:
     import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
   autoconfigure:
@@ -29,11 +33,10 @@ spring:
             scope: openid, profile
         provider:
           keycloak:
-            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
+            token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
       resourceserver:
         jwt:
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
-
+          jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
 
 server:
   port: ${SERVER_PORT:8084}
@@ -46,10 +49,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-accounts:
-  service:
-    url: http://accounts-service:8081
-notifications:
-  service:
-    url: http://notifications-service:8082

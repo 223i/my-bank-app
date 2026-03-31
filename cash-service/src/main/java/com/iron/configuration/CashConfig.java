@@ -1,6 +1,7 @@
 package com.iron.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
@@ -14,11 +15,22 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class CashConfig {
 
-    @Value("${accounts.service.url}")
-    private String accountsServiceUrl;
+    /**
+     * Два отдельных @LoadBalanced builder'а — по одному на каждый downstream-сервис.
+     * Это предотвращает накопление interceptors в одном builder'е при построении
+     * нескольких RestClient beans.
+     */
+    @Bean("cashAccountsClientBuilder")
+    @LoadBalanced
+    public RestClient.Builder accountsClientBuilder() {
+        return RestClient.builder();
+    }
 
-    @Value("${notifications.service.url}")
-    private String notificationServiceUrl;
+    @Bean("cashNotificationsClientBuilder")
+    @LoadBalanced
+    public RestClient.Builder notificationsClientBuilder() {
+        return RestClient.builder();
+    }
 
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
@@ -35,16 +47,26 @@ public class CashConfig {
     }
 
     @Bean
-    public RestClient accountsRestClient(RestClient.Builder builder, OAuth2AuthorizedClientManager manager) {
+    public RestClient accountsRestClient(
+            @Qualifier("cashAccountsClientBuilder") RestClient.Builder builder,
+            OAuth2AuthorizedClientManager manager) {
         var interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
         interceptor.setClientRegistrationIdResolver(request -> "cash-service-client");
-        return builder.baseUrl(accountsServiceUrl).requestInterceptor(interceptor).build();
+        return builder
+                .baseUrl("lb://accounts-service")
+                .requestInterceptor(interceptor)
+                .build();
     }
 
     @Bean
-    public RestClient notificationsRestClient(RestClient.Builder builder, OAuth2AuthorizedClientManager manager) {
+    public RestClient notificationsRestClient(
+            @Qualifier("cashNotificationsClientBuilder") RestClient.Builder builder,
+            OAuth2AuthorizedClientManager manager) {
         var interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
         interceptor.setClientRegistrationIdResolver(request -> "cash-service-client");
-        return builder.baseUrl(notificationServiceUrl).requestInterceptor(interceptor).build();
+        return builder
+                .baseUrl("lb://notifications-service")
+                .requestInterceptor(interceptor)
+                .build();
     }
 }

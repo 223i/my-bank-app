@@ -18,7 +18,7 @@ public class CashService {
     private final RestClient notificationsRestClient;
 
     public void processOperation(String login, BigDecimal amount, String type) {
-        String uri = type.equalsIgnoreCase("DEPOSIT") ? "/increase-balance" : "/decrease-balance";
+        String uri = type.equalsIgnoreCase("PUT") ? "/increase-balance" : "/decrease-balance";
 
         try {
             // 1. Запрос в Accounts
@@ -31,9 +31,9 @@ public class CashService {
                     .toBodilessEntity();
 
             // 2. Уведомление
-            String msg = type.equalsIgnoreCase("DEPOSIT") ? "Пополнение на " : "Снятие ";
+            String msg = type.equalsIgnoreCase("PUT") ? "Пополнение на " : "Снятие ";
             notificationsRestClient.post()
-                    .uri("/send")
+                    .uri("/api/notifications/send")
                     .body(new NotificationRequest(login, msg + amount + " руб. успешно выполнено", "CASH_OP"))
                     .retrieve()
                     .toBodilessEntity();
