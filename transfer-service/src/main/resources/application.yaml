@@ -7,6 +7,10 @@ spring:
       port: 8500
       discovery:
         service-name: transfer-service
+        enabled: true
+        register: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
       config:
         enabled: true
         prefix: config
@@ -29,13 +33,13 @@ spring:
             scope: openid, profile
         provider:
           keycloak:
-            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
+            token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
       resourceserver:
         jwt:
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+          jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
 
 server:
-  port: ${SERVER_PORT:8083}
+  port: ${SERVER_PORT:8085}
 
 management:
   endpoints:
@@ -45,11 +49,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-notifications:
-  service:
-    url: http://notifications-service:8082
-
-accounts:
-  service:
-    url: http://accounts-service:8081

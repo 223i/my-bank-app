@@ -1,16 +1,30 @@
 package com.iron.exception;
 
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@ControllerAdvice
+import java.time.LocalDateTime;
+
+@Slf4j
+@RestControllerAdvice
 public class TransferExceptionHandler {
 
+    public record ErrorResponse(int status, String message, LocalDateTime timestamp) {}
+
     @ExceptionHandler(TransferException.class)
-    public String handleTransferError(TransferException ex, RedirectAttributes redirectAttributes) {
-        // Добавляем сообщение об ошибке, которое можно показать в Thymeleaf
-        redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
-        return "redirect:/transfer-error"; // Страница, где выведем текст ошибки
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleTransferError(TransferException ex) {
+        log.warn("Transfer rejected: {}", ex.getMessage());
+        return new ErrorResponse(400, ex.getMessage(), LocalDateTime.now());
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleGeneral(Exception ex) {
+        log.error("Unexpected error in transfer-service", ex);
+        return new ErrorResponse(500, "Internal server error", LocalDateTime.now());
     }
 }

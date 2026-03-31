@@ -1,6 +1,7 @@
 package com.iron.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
@@ -14,11 +15,17 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class TransferConfig {
 
-    @Value("${notifications.service.url}")
-    private String notificationServiceUrl;
+    @Bean("transferAccountsClientBuilder")
+    @LoadBalanced
+    public RestClient.Builder accountsClientBuilder() {
+        return RestClient.builder();
+    }
 
-    @Value("${accounts.service.url}")
-    private String accountsServiceUrl;
+    @Bean("transferNotificationsClientBuilder")
+    @LoadBalanced
+    public RestClient.Builder notificationsClientBuilder() {
+        return RestClient.builder();
+    }
 
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
@@ -35,19 +42,25 @@ public class TransferConfig {
     }
 
     @Bean
-    public RestClient accountsRestClient(RestClient.Builder builder, OAuth2AuthorizedClientManager manager) {
+    public RestClient accountsRestClient(
+            @Qualifier("transferAccountsClientBuilder") RestClient.Builder builder,
+            OAuth2AuthorizedClientManager manager) {
         OAuth2ClientHttpRequestInterceptor interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
         interceptor.setClientRegistrationIdResolver(request -> "transfer-service-client");
-        return builder.baseUrl(accountsServiceUrl)
+        return builder
+                .baseUrl("lb://accounts-service")
                 .requestInterceptor(interceptor)
                 .build();
     }
 
     @Bean
-    public RestClient notificationsRestClient(RestClient.Builder builder, OAuth2AuthorizedClientManager manager) {
+    public RestClient notificationsRestClient(
+            @Qualifier("transferNotificationsClientBuilder") RestClient.Builder builder,
+            OAuth2AuthorizedClientManager manager) {
         OAuth2ClientHttpRequestInterceptor interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
         interceptor.setClientRegistrationIdResolver(request -> "transfer-service-client");
-        return builder.baseUrl(notificationServiceUrl)
+        return builder
+                .baseUrl("lb://notifications-service")
                 .requestInterceptor(interceptor)
                 .build();
     }
