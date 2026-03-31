@@ -19,6 +19,7 @@ spring:
         prefix: config
         defaultContext: application
   config:
+    # optional: если Consul недоступен, используются локальные defaults
     import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -27,12 +28,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+          # keycloak.jwk-set-uri поставляется Consul Config (config/application/)
+          jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
       client:
         registration:
           accounts-service-client:
@@ -43,14 +45,10 @@ spring:
             scope: openid, profile
         provider:
           keycloak:
-            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
+            token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
 
 server:
   port: ${SERVER_PORT:8081}
-
-notifications:
-  service:
-    url: http://notifications-service:8082
 
 management:
   endpoints:

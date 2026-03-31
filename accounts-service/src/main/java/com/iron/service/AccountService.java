@@ -4,18 +4,19 @@ import com.iron.dto.AccountDto;
 import com.iron.dto.AccountPublicDto;
 import com.iron.dto.AccountUpdateDto;
 import com.iron.dto.NotificationRequest;
+import com.iron.exception.AccountNotFoundException;
 import com.iron.mapper.AccountMapper;
 import com.iron.model.Account;
 import com.iron.repository.AccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import javax.security.auth.login.AccountNotFoundException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 
 @Slf4j
@@ -23,71 +24,80 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AccountService {
 
+    private static final int MIN_AGE = 18;
+
     private final AccountMapper mapper;
     private final AccountRepository accountRepository;
     private final RestClient notificationsRestClient;
 
-    @SneakyThrows
     public AccountDto getAccount(String login) {
         log.info("Getting account by login: {}", login);
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
 
-        log.debug("Found account ID: {}", account.getId());
-        return mapper.toDto(account);
+        // Включаем список других аккаунтов для отображения dropdown переводов
+        AccountDto base = mapper.toDto(account);
+        List<AccountDto> otherAccounts = accountRepository.findAllByLoginNot(login).stream()
+                .map(mapper::toDto)
+                .toList();
+
+        return AccountDto.builder()
+                .login(base.getLogin())
+                .name(base.getName())
+                .birthday(base.getBirthday())
+                .sum(base.getSum())
+                .accounts(otherAccounts)
+                .build();
     }
 
     @Transactional
-    @SneakyThrows
     public AccountDto updateAccount(String login, AccountUpdateDto updateDto) {
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found"));
 
+        validateAge(updateDto.getBirthday());
+
         mapper.updateEntity(updateDto, account);
-        sendNotification(
-                login,
+        account = accountRepository.save(account);
+
+        sendNotification(login,
                 "Ваши персональные данные (ФИО/Дата рождения) были успешно изменены.",
-                "PROFILE_UPDATE"
-        );
-        return mapper.toDto(accountRepository.save(account));
+                "PROFILE_UPDATE");
+
+        return mapper.toDto(account);
     }
 
     public List<AccountPublicDto> searchOthersAccounts(String currentLogin) {
         log.info("Fetching all accounts except: {}", currentLogin);
-
-        List<Account> others = accountRepository.findAllByLoginNot(currentLogin);
-
-        return mapper.toPublicDtoList(others);
+        return mapper.toPublicDtoList(accountRepository.findAllByLoginNot(currentLogin));
     }
 
     @Transactional
-    @SneakyThrows
     public void decreaseBalance(String login, BigDecimal amount) {
         log.info("Decreasing balance for {} by {}", login, amount);
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
-        
+
         if (account.getBalance().compareTo(amount) < 0) {
-            throw new IllegalArgumentException("Insufficient funds");
+            throw new IllegalArgumentException("Insufficient funds: balance " + account.getBalance() + " < " + amount);
         }
-        
+
         account.setBalance(account.getBalance().subtract(amount));
         accountRepository.save(account);
-        
-        sendNotification(login, "С вашего счета списано: " + amount, "BALANCE_DECREASE");
+
+        sendNotification(login, "С вашего счета списано: " + amount + " руб.", "BALANCE_DECREASE");
     }
 
     @Transactional
-    @SneakyThrows
     public void increaseBalance(String login, BigDecimal amount) {
         log.info("Increasing balance for {} by {}", login, amount);
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
-        
+
         account.setBalance(account.getBalance().add(amount));
         accountRepository.save(account);
-        
-        sendNotification(login, "На ваш счет зачислено: " + amount, "BALANCE_INCREASE");
+
+        sendNotification(login, "На ваш счет зачислено: " + amount + " руб.", "BALANCE_INCREASE");
     }
 
     public void sendNotification(String login, String text, String type) {
@@ -96,16 +106,22 @@ public class AccountService {
                 .message(text)
                 .type(type)
                 .build();
-
         try {
             notificationsRestClient.post()
-                    .uri("/api/notifications") // Эндпоинт в сервисе Notifications
+                    .uri("/api/notifications/send")
                     .body(request)
                     .retrieve()
                     .toBodilessEntity();
             log.info("Notification sent to {} about {}", login, type);
         } catch (Exception e) {
-            log.error("Failed to send notification: {}", e.getMessage());
+            // Не прерываем основную операцию из-за ошибки уведомления
+            log.error("Failed to send notification to {}: {}", login, e.getMessage());
+        }
+    }
+
+    private void validateAge(LocalDate birthday) {
+        if (birthday != null && Period.between(birthday, LocalDate.now()).getYears() < MIN_AGE) {
+            throw new IllegalArgumentException("Account holder must be at least " + MIN_AGE + " years old");
         }
     }
 }

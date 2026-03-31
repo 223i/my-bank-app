@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,10 +21,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/api/accounts/*/decrease-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
-                        .requestMatchers("/api/accounts/*/increase-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
+                        // Balance endpoints вызываются service-to-service через client_credentials
+                        // Path на уровне accounts-service (после RewritePath в gateway): /{login}/decrease-balance
+                        .requestMatchers("/*/decrease-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
+                        .requestMatchers("/*/increase-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 ->
@@ -40,8 +44,7 @@ public class SecurityConfig {
             if (realmAccess == null) return Collections.emptyList();
             List<String> roles = (List<String>) realmAccess.get("roles");
             if (roles == null) return Collections.emptyList();
-            return roles.stream(
-                    )
+            return roles.stream()
                     .<org.springframework.security.core.GrantedAuthority>map(SimpleGrantedAuthority::new)
                     .toList();
         });

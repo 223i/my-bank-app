@@ -1,6 +1,6 @@
 package com.iron.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
@@ -14,8 +14,16 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RestClientConfig {
 
-    @Value("${notifications.service.url}")
-    private String notificationServiceUrl;
+    /**
+     * Отдельный builder для notifications-service.
+     * @LoadBalanced добавляет Spring Cloud LoadBalancer interceptor,
+     * который резолвит lb://notifications-service через Consul.
+     */
+    @Bean("notificationsClientBuilder")
+    @LoadBalanced
+    public RestClient.Builder notificationsClientBuilder() {
+        return RestClient.builder();
+    }
 
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
@@ -33,6 +41,7 @@ public class RestClientConfig {
 
     @Bean
     public RestClient notificationsRestClient(
+            @org.springframework.beans.factory.annotation.Qualifier("notificationsClientBuilder")
             RestClient.Builder builder,
             OAuth2AuthorizedClientManager authorizedClientManager) {
 
@@ -41,7 +50,7 @@ public class RestClientConfig {
         interceptor.setClientRegistrationIdResolver(request -> "accounts-service-client");
 
         return builder
-                .baseUrl(notificationServiceUrl)
+                .baseUrl("lb://notifications-service")
                 .requestInterceptor(interceptor)
                 .build();
     }

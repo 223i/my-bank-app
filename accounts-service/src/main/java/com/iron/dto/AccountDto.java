@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public class AccountDto {
 
+    private String login;
     private String name;
     private OffsetDateTime birthday;
     private Long sum;
