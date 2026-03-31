@@ -41,7 +41,9 @@ services:
     volumes:
       - ./bank-app-realm.json:/opt/keycloak/data/import/bank-app-realm.json
     networks:
-      - microservices-network
+      microservices-network:
+        aliases:
+          - keycloak-server
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/live" ]
       interval: 5s
@@ -57,7 +59,7 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=gateway-service
       - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
-      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
     depends_on:
       - keycloak
       - consul
@@ -73,8 +75,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
-      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
-      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
+      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
       - SERVER_PORT=8081
       - CLIENT_SECRET=${CLIENT_SECRET}
     depends_on:
@@ -96,8 +98,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
-      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
-      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
       - SERVER_PORT=8082
     depends_on:
       common-db:
@@ -113,7 +114,8 @@ services:
     build: ./transfer-service
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
-      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
+      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
       - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
       - TRANSFER_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
@@ -127,7 +129,8 @@ services:
     build: ./cash-service
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
-      - OAUTH2_ISSUER_URI=http://keycloak:8080/realms/bank-app-realm
+      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
+      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
       - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
       - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
       - CASH_CLIENT_SECRET=${CASH_CLIENT_SECRET}
@@ -141,22 +144,13 @@ services:
     build: ./my-bank-front-app
     ports:
       - "8083:8083"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=my-bank-front-app
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_AUTHENTICATION_METHOD=client_secret_post
-#      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/userinfo
-      - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
-      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI=http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/auth
-      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI=http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token
       - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID=my-bank-front-app
-      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET=dsMkf9amfvPEk5oROrMW74NL8hZH7FdM
-      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://host.docker.internal:8080/realms/bank-app-realm
-      - OAUTH2_ISSUER_URI=http://host.docker.internal:8080
-      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI=http://host.docker.internal:8080/protocol/openid-connect/userinfo
-
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET=${FRONTEND_CLIENT_SECRET}
+      - KEYCLOAK_FRONTEND_URL=http://localhost:8080
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080
       - SERVER_PORT=8083
     depends_on:
       gateway-service:
@@ -170,7 +164,7 @@ services:
       cash-service:
         condition: service_started
       keycloak:
-        condition: service_started
+        condition: service_healthy
       consul:
         condition: service_started
     networks:

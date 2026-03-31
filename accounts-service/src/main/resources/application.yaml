@@ -32,18 +32,18 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/bank-app-realm}
-#      client:
-#        registration:
-#          notifications-client:
-#            provider: keycloak
-#            client-id: accounts-service-client
-#            client-secret: ${CLIENT_SECRET}
-#            authorization-grant-type: client_credentials
-#            scope: openid, profile
-#        provider:
-#          keycloak:
-#            issuer-uri: ${OAUTH2_ISSUER_URI:http://localhost:8080/realms/bank-app-realm}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+      client:
+        registration:
+          accounts-service-client:
+            provider: keycloak
+            client-id: accounts-service-client
+            client-secret: ${CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid, profile
+        provider:
+          keycloak:
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
 
 server:
   port: ${SERVER_PORT:8081}

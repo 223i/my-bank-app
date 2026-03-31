@@ -1,5 +1,5 @@
 server:
-  port: 8080 #  фронтенд
+  port: 8080
 
 spring:
   application:
@@ -18,46 +18,38 @@ spring:
         instance-id: ${spring.application.name}:${random.value}
         hostname: ${spring.application.name}
       config:
-        enabled: true            # Включаем Consul Config для внешней конфигурации
-        prefix: config           # Префикс в KV-хранилище Consul (по умолчанию "config")
-        defaultContext: application  # Контекст по умолчанию
-
-  config:
-    import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
+        enabled: true
+        prefix: config
+        defaultContext: application
     gateway:
       default-filters:
         - TokenRelay
       routes:
-        # Accounts
         - id: accounts-route
           uri: lb://accounts-service
           predicates:
             - Path=/api/accounts/**
 
-        # Notifications
         - id: notifications-route
           uri: lb://notifications-service
           predicates:
             - Path=/api/notifications/**
 
-        # Transfer
         - id: transfer-route
           uri: lb://transfer-service
           predicates:
             - Path=/transfer/**
 
-        # Cash
         - id: cash-route
           uri: lb://cash-service
           predicates:
             - Path=/cash/**
 
+  config:
+    import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
+
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://keycloak:8080/realms/my-bank-app
-      client:
-        provider:
-          keycloak:
-            issuer-uri: http://keycloak:8080/realms/my-bank-app
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
