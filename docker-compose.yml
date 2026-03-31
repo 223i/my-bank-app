@@ -6,6 +6,34 @@ services:
     ports:
       - "8500:8500"
     command: "agent -dev -client=0.0.0.0"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8500/v1/status/leader"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservices-network
+
+  # Заполняет Consul KV общей конфигурацией (Keycloak URLs).
+  # Запускается один раз после того, как Consul готов, и завершается.
+  # Сервисы через spring.config.import подхватывают эти значения.
+  consul-config-init:
+    image: hashicorp/consul:1.15.4
+    depends_on:
+      consul:
+        condition: service_healthy
+    environment:
+      - CONSUL_HTTP_ADDR=consul:8500
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        consul kv put config/application/keycloak.jwk-set-uri \
+          "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs" &&
+        consul kv put config/application/keycloak.token-uri \
+          "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token" &&
+        echo "==> Consul KV initialized"
+    restart: "no"
     networks:
       - microservices-network
 
@@ -19,7 +47,7 @@ services:
     ports:
       - "5433:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${COMMON_DB_USERNAME} -d ${COMMON_DB_NAME}" ]
+      test: ["CMD-SHELL", "pg_isready -U ${COMMON_DB_USERNAME} -d ${COMMON_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -45,12 +73,16 @@ services:
         aliases:
           - keycloak-server
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/live" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   # --- Микросервисы ---
+  # Keycloak URLs (keycloak.jwk-set-uri, keycloak.token-uri) поставляются
+  # через Consul KV, а не через env vars — убирает дублирование конфига.
+  # Секреты (CLIENT_SECRET, KEYCLOAK_ADMIN_*) остаются в env vars — в KV не хранятся.
+
   gateway-service:
     build: ./gateway-service
     ports:
@@ -59,10 +91,13 @@ services:
       - SPRING_CLOUD_CONSUL_HOST=consul
       - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=gateway-service
       - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
     depends_on:
-      - keycloak
-      - consul
+      consul-config-init:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
+      consul:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -75,16 +110,14 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
-      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
       - SERVER_PORT=8081
       - CLIENT_SECRET=${CLIENT_SECRET}
     depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
       common-db:
         condition: service_healthy
       keycloak:
-        condition: service_started
-      consul:
         condition: service_started
     networks:
       - microservices-network
@@ -98,14 +131,13 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
       - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
       - SERVER_PORT=8082
     depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
       common-db:
         condition: service_healthy
       keycloak:
-        condition: service_started
-      consul:
         condition: service_started
     networks:
       - microservices-network
@@ -114,14 +146,15 @@ services:
     build: ./transfer-service
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
-      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
-      - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
-      - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
       - TRANSFER_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
+      - SERVER_PORT=8085
     depends_on:
-      - accounts-service
-      - consul
+      consul-config-init:
+        condition: service_completed_successfully
+      accounts-service:
+        condition: service_started
+      consul:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -129,14 +162,15 @@ services:
     build: ./cash-service
     environment:
       - SPRING_CLOUD_CONSUL_HOST=consul
-      - KEYCLOAK_JWK_SET_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
-      - KEYCLOAK_TOKEN_URI=http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token
-      - ACCOUNTS_SERVICE_URL=http://accounts-service:8081
-      - NOTIFICATIONS_SERVICE_URL=http://notifications-service:8082
       - CASH_CLIENT_SECRET=${CASH_CLIENT_SECRET}
+      - SERVER_PORT=8084
     depends_on:
-      - accounts-service
-      - consul
+      consul-config-init:
+        condition: service_completed_successfully
+      accounts-service:
+        condition: service_started
+      consul:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -154,6 +188,8 @@ services:
       - KEYCLOAK_INTERNAL_URL=http://keycloak:8080
       - SERVER_PORT=8083
     depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
       gateway-service:
         condition: service_started
       accounts-service:
@@ -165,8 +201,6 @@ services:
       cash-service:
         condition: service_started
       keycloak:
-        condition: service_healthy
-      consul:
         condition: service_started
     networks:
       - microservices-network
