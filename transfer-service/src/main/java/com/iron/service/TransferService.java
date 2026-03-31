@@ -1,7 +1,7 @@
 package com.iron.service;
 
 import com.iron.exception.TransferException;
-import com.iron.dto.NotificationRequest;
+import com.iron.model.NotificationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

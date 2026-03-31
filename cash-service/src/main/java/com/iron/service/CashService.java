@@ -1,6 +1,6 @@
 package com.iron.service;
 
-import com.iron.model.NotificationRequest;
+import com.iron.dto.NotificationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;

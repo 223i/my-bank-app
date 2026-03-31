@@ -7,6 +7,7 @@ import com.iron.model.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -25,8 +26,8 @@ public abstract class AccountMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "login", ignore = true)
     @Mapping(target = "balance", ignore = true)
-    @Mapping(target = "firstName", expression = "java(extractFirstName(dto.getName()))")
-    @Mapping(target = "lastName", expression = "java(extractLastName(dto.getName()))")
+    @Mapping(target = "firstName", source = "name", qualifiedByName = "extractFirstName")
+    @Mapping(target = "lastName", source = "name", qualifiedByName = "extractLastName")
     @Mapping(target = "birthday", source = "birthday")
     public abstract void updateEntity(AccountUpdateDto dto, @MappingTarget Account entity);
 
@@ -45,12 +46,14 @@ public abstract class AccountMapper {
         return date != null ? date.atStartOfDay().atOffset(ZoneOffset.UTC) : null;
     }
 
+    @Named("extractFirstName")
     protected String extractFirstName(String fullName) {
         if (fullName == null || fullName.isBlank()) return null;
         int spaceIdx = fullName.indexOf(' ');
         return spaceIdx > 0 ? fullName.substring(0, spaceIdx) : fullName;
     }
 
+    @Named("extractLastName")
     protected String extractLastName(String fullName) {
         if (fullName == null || fullName.isBlank()) return null;
         int spaceIdx = fullName.indexOf(' ');
