@@ -78,8 +78,6 @@ public class MainController {
         model.addAttribute("hasAccountsAccess", jwtTokenUtil.hasAccountsAccess());
         model.addAttribute("hasCashAccess", jwtTokenUtil.hasCashAccess());
         model.addAttribute("hasTransferAccess", jwtTokenUtil.hasTransferAccess());
-        model.addAttribute("jwtToken", jwtTokenUtil.getJwtToken());
-
         return "main";
     }
 

@@ -66,10 +66,4 @@ public class JwtTokenUtil {
         return hasRole("ROLE_TRANSFER_USER") || hasRole("TRANSFER_USER");
     }
 
-    public String getJwtToken() {
-        // Note: In OAuth2 login flow, the JWT token is not directly accessible
-        // This method would need to be implemented differently if token access is needed
-        // For now, return null as the token is managed by Spring Security
-        return null;
-    }
 }
