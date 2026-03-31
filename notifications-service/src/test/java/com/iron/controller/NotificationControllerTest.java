@@ -2,7 +2,7 @@ package com.iron.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iron.configuration.TestSecurityConfig;
-import com.iron.model.NotificationRequest;
+import com.iron.dto.NotificationRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

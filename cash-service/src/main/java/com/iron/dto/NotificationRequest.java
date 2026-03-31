@@ -1,4 +1,4 @@
-package com.iron.model;
+package com.iron.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
