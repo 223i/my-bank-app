@@ -1,20 +1,20 @@
 spring:
-  application:
-    name: transfer-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9999/jwks
   cloud:
     consul:
-      enabled: false
+      config:
+        enabled: false
   config:
     import: ""
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
 
-server:
-  port: 0
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info
-  endpoint:
-    health:
-      show-details: always
+services:
+  accounts-url: http://localhost:9998
+  notifications-url: http://localhost:9997
