@@ -50,6 +50,9 @@ spring:
           keycloak:
             token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
 
+services:
+  notifications-url: ${NOTIFICATIONS_SERVICE_URL:http://notifications-service:8082}
+
 server:
   port: ${SERVER_PORT:8081}
 
