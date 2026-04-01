@@ -1,11 +1,13 @@
 package com.iron.controller;
 
+import com.iron.configuration.TestSecurityConfig;
 import com.iron.exception.TransferException;
 import com.iron.service.TransferService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = TransferController.class, excludeAutoConfiguration = {
         org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration.class
 })
+@Import(TestSecurityConfig.class)
 @ActiveProfiles("test")
 @DisplayName("TransferController Tests")
 class TransferControllerTest {

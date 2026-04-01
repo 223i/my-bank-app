@@ -20,8 +20,8 @@ public class TestSecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/notifications/**").hasAuthority("ROLE_NOTIFICATIONS_USER")
-                        .anyRequest().authenticated()
+                        .requestMatchers("/transfer/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
@@ -47,7 +47,7 @@ public class TestSecurityConfig {
             org.springframework.security.oauth2.jwt.Jwt.Builder builder = org.springframework.security.oauth2.jwt.Jwt.withTokenValue("test-token");
             builder.header("alg", "none");
             builder.claim("sub", "test-user");
-            builder.claim("scope", "ROLE_NOTIFICATIONS_USER");
+            builder.claim("preferred_username", "test-user");
             return builder.build();
         };
     }
