@@ -13,12 +13,6 @@
     <description>Microservice for accounts management</description>
     <packaging>jar</packaging>
 
-    <properties>
-        <java.version>21</java.version>
-        <mapstruct.version>1.6.3</mapstruct.version>
-        <lombok.version>1.18.32</lombok.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -96,7 +90,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok-mapstruct-binding</artifactId>
-            <version>0.2.0</version>
+            <version>${lombok-mapstruct-binding.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -137,7 +131,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok-mapstruct-binding</artifactId>
-                            <version>0.2.0</version>
+                            <version>${lombok-mapstruct-binding.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

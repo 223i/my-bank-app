@@ -12,11 +12,6 @@
     <name>cash-service</name>
     <description>Microservice for cash operations management</description>
 
-    <properties>
-        <java.version>21</java.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
