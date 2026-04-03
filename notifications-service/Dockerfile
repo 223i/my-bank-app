@@ -16,7 +16,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
     chown -R appuser:appgroup /app
 
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/target/*-exec.jar app.jar
 
 RUN chown appuser:appgroup app.jar
 
