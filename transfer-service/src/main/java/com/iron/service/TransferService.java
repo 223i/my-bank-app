@@ -1,5 +1,7 @@
 package com.iron.service;
 
+import com.iron.exception.InvalidTransferAmountException;
+import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
 import com.iron.model.NotificationRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,10 @@ public class TransferService {
     private final RestClient notificationsRestClient;
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
+        log.info("Transfer from {} to {} for amount {}", fromLogin, toLogin, amount);
+        if (fromLogin.equals(toLogin)) { throw new SelfTransferException("Cannot transfer to the same account"); }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) { throw new InvalidTransferAmountException("Amount must be positive"); }
+
         try {
             // 1. Списываем у отправителя
             accountsRestClient.patch()

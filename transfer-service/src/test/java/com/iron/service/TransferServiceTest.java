@@ -1,5 +1,7 @@
 package com.iron.service;
 
+import com.iron.exception.InvalidTransferAmountException;
+import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -89,6 +91,91 @@ class TransferServiceTest {
                 .hasMessageContaining("Connection refused");
 
         verify(accountsRestClient, times(1)).patch();
+        verifyNoInteractions(notificationsRestClient);
+    }
+
+    @Test
+    @DisplayName("Should throw SelfTransferException when transferring to same account")
+    void makeTransfer_throwsSelfTransferException() {
+        String fromLogin = "jdoe";
+        String toLogin = "jdoe";
+        BigDecimal amount = BigDecimal.valueOf(100);
+
+        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+                .isInstanceOf(SelfTransferException.class)
+                .hasMessage("Cannot transfer to the same account")
+                .extracting("errorCode")
+                .isEqualTo("TRANSFER_ERROR");
+
+        verifyNoInteractions(accountsRestClient);
+        verifyNoInteractions(notificationsRestClient);
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidTransferAmountException when amount is zero")
+    void makeTransfer_throwsInvalidTransferAmountExceptionWhenAmountIsZero() {
+        String fromLogin = "jdoe";
+        String toLogin = "alice_99";
+        BigDecimal amount = BigDecimal.ZERO;
+
+        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+                .isInstanceOf(InvalidTransferAmountException.class)
+                .hasMessage("Amount must be positive")
+                .extracting("errorCode")
+                .isEqualTo("TRANSFER_ERROR");
+
+        verifyNoInteractions(accountsRestClient);
+        verifyNoInteractions(notificationsRestClient);
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidTransferAmountException when amount is negative")
+    void makeTransfer_throwsInvalidTransferAmountExceptionWhenAmountIsNegative() {
+        String fromLogin = "jdoe";
+        String toLogin = "alice_99";
+        BigDecimal amount = BigDecimal.valueOf(-50);
+
+        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+                .isInstanceOf(InvalidTransferAmountException.class)
+                .hasMessage("Amount must be positive")
+                .extracting("errorCode")
+                .isEqualTo("TRANSFER_ERROR");
+
+        verifyNoInteractions(accountsRestClient);
+        verifyNoInteractions(notificationsRestClient);
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidTransferAmountException with custom error code")
+    void makeTransfer_throwsInvalidTransferAmountExceptionWithCustomErrorCode() {
+        String fromLogin = "jdoe";
+        String toLogin = "alice_99";
+        BigDecimal amount = BigDecimal.valueOf(-100);
+
+        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+                .isInstanceOf(InvalidTransferAmountException.class)
+                .hasMessage("Amount must be positive")
+                .extracting("errorCode")
+                .isEqualTo("TRANSFER_ERROR");
+
+        verifyNoInteractions(accountsRestClient);
+        verifyNoInteractions(notificationsRestClient);
+    }
+
+    @Test
+    @DisplayName("Should throw SelfTransferException with custom error code")
+    void makeTransfer_throwsSelfTransferExceptionWithCustomErrorCode() {
+        String fromLogin = "alice_99";
+        String toLogin = "alice_99";
+        BigDecimal amount = BigDecimal.valueOf(100);
+
+        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+                .isInstanceOf(SelfTransferException.class)
+                .hasMessage("Cannot transfer to the same account")
+                .extracting("errorCode")
+                .isEqualTo("TRANSFER_ERROR");
+
+        verifyNoInteractions(accountsRestClient);
         verifyNoInteractions(notificationsRestClient);
     }
 }
