@@ -3,9 +3,12 @@ package com.iron.service;
 import com.iron.dto.AccountDto;
 import com.iron.dto.AccountPublicDto;
 import com.iron.dto.AccountUpdateDto;
+import com.iron.exception.AccountNotFoundException;
 import com.iron.mapper.AccountMapper;
 import com.iron.model.Account;
+import com.iron.model.ProcessedTransaction;
 import com.iron.repository.AccountRepository;
+import com.iron.repository.ProcessedTransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.iron.exception.AccountNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -24,6 +26,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +38,9 @@ class AccountServiceTest {
 
     @Mock
     private AccountRepository accountRepository;
+
+    @Mock
+    private ProcessedTransactionRepository processedTransactionRepository;
 
     @InjectMocks
     private AccountService accountService;
@@ -140,18 +146,8 @@ class AccountServiceTest {
     void searchOthersAccounts_Success() {
         String currentLogin = "testuser";
         List<Account> otherAccounts = List.of(
-                Account.builder()
-                        .id(2L)
-                        .login("otheruser1")
-                        .firstName("Other")
-                        .lastName("User1")
-                        .build(),
-                Account.builder()
-                        .id(3L)
-                        .login("otheruser2")
-                        .firstName("Another")
-                        .lastName("User2")
-                        .build()
+                Account.builder().id(2L).login("otheruser1").firstName("Other").lastName("User1").build(),
+                Account.builder().id(3L).login("otheruser2").firstName("Another").lastName("User2").build()
         );
 
         List<AccountPublicDto> expectedDtos = new ArrayList<>();
@@ -190,23 +186,112 @@ class AccountServiceTest {
         verify(mapper).toPublicDtoList(List.of());
     }
 
-    @Test
-    @DisplayName("Should send notification successfully")
-    void sendNotification_Success() {
-        String login = "testuser";
-        String text = "Test notification";
-        String type = "TEST";
+    // ─── decreaseBalance ──────────────────────────────────────────────────────
 
-        accountService.sendNotification(login, text, type);
+    @Test
+    @DisplayName("Should decrease balance successfully and save transactionId")
+    void decreaseBalance_Success() {
+        String transactionId = "tx-debit-001";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(false);
+        when(accountRepository.findByLogin("testuser")).thenReturn(Optional.of(testAccount));
+        when(accountRepository.save(testAccount)).thenReturn(testAccount);
+
+        accountService.decreaseBalance("testuser", BigDecimal.valueOf(100), transactionId);
+
+        assertThat(testAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(900.50));
+        verify(accountRepository).save(testAccount);
+        verify(processedTransactionRepository).save(any(ProcessedTransaction.class));
+    }
+
+    @Test
+    @DisplayName("Should skip decrease when transactionId already processed (idempotency)")
+    void decreaseBalance_AlreadyProcessed_Skips() {
+        String transactionId = "tx-debit-duplicate";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(true);
+
+        accountService.decreaseBalance("testuser", BigDecimal.valueOf(100), transactionId);
+
+        verifyNoInteractions(accountRepository);
+        verify(processedTransactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw when insufficient funds on decrease")
+    void decreaseBalance_InsufficientFunds() {
+        String transactionId = "tx-debit-002";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(false);
+        when(accountRepository.findByLogin("testuser")).thenReturn(Optional.of(testAccount));
+
+        assertThatThrownBy(() ->
+                accountService.decreaseBalance("testuser", BigDecimal.valueOf(9999), transactionId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Insufficient funds");
+
+        verify(accountRepository, never()).save(any());
+        verify(processedTransactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw AccountNotFoundException when account not found on decrease")
+    void decreaseBalance_AccountNotFound() {
+        String transactionId = "tx-debit-003";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(false);
+        when(accountRepository.findByLogin("unknown")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                accountService.decreaseBalance("unknown", BigDecimal.valueOf(100), transactionId))
+                .isInstanceOf(AccountNotFoundException.class);
+
+        verify(processedTransactionRepository, never()).save(any());
+    }
+
+    // ─── increaseBalance ──────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Should increase balance successfully and save transactionId")
+    void increaseBalance_Success() {
+        String transactionId = "tx-credit-001";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(false);
+        when(accountRepository.findByLogin("testuser")).thenReturn(Optional.of(testAccount));
+        when(accountRepository.save(testAccount)).thenReturn(testAccount);
+
+        accountService.increaseBalance("testuser", BigDecimal.valueOf(500), transactionId);
+
+        assertThat(testAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1500.50));
+        verify(accountRepository).save(testAccount);
+        verify(processedTransactionRepository).save(any(ProcessedTransaction.class));
+    }
+
+    @Test
+    @DisplayName("Should skip increase when transactionId already processed (idempotency)")
+    void increaseBalance_AlreadyProcessed_Skips() {
+        String transactionId = "tx-credit-duplicate";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(true);
+
+        accountService.increaseBalance("testuser", BigDecimal.valueOf(500), transactionId);
+
+        verifyNoInteractions(accountRepository);
+        verify(processedTransactionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should throw AccountNotFoundException when account not found on increase")
+    void increaseBalance_AccountNotFound() {
+        String transactionId = "tx-credit-002";
+        when(processedTransactionRepository.existsById(transactionId)).thenReturn(false);
+        when(accountRepository.findByLogin("unknown")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                accountService.increaseBalance("unknown", BigDecimal.valueOf(100), transactionId))
+                .isInstanceOf(AccountNotFoundException.class);
+
+        verify(processedTransactionRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Should handle notification service failure gracefully")
     void sendNotification_Failure() {
-        String login = "testuser";
-        String text = "Test notification";
-        String type = "TEST";
-
-        accountService.sendNotification(login, text, type);
+        accountService.sendNotification("testuser", "Test notification", "TEST");
+        // Не выбрасывает исключение — уведомление не прерывает основной поток
     }
 }

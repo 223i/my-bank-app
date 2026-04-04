@@ -70,6 +70,12 @@ resilience4j:
       accountsService:
         maxAttempts: 3
         waitDuration: 500ms
+        # Retry только на сетевые/серверные ошибки; 4xx (напр. недостаточно средств) не ретраить
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+        ignoreExceptions:
+          - org.springframework.web.client.HttpClientErrorException
       notificationsService:
         maxAttempts: 3
         waitDuration: 500ms

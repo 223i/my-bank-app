@@ -1,4 +1,5 @@
--- Drop table if exists (for development purposes)
+-- Drop tables if exist (for development purposes)
+DROP TABLE IF EXISTS processed_transactions;
 DROP TABLE IF EXISTS accounts CASCADE;
 
 -- Create accounts table
@@ -31,3 +32,9 @@ CREATE SEQUENCE IF NOT EXISTS account_number_seq
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
+
+-- Create processed_transactions table for idempotency
+CREATE TABLE processed_transactions (
+    transaction_id VARCHAR(64) PRIMARY KEY,
+    created_at     TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

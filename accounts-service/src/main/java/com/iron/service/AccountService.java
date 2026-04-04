@@ -7,7 +7,9 @@ import com.iron.dto.NotificationRequest;
 import com.iron.exception.AccountNotFoundException;
 import com.iron.mapper.AccountMapper;
 import com.iron.model.Account;
+import com.iron.model.ProcessedTransaction;
 import com.iron.repository.AccountRepository;
+import com.iron.repository.ProcessedTransactionRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
@@ -31,6 +33,7 @@ public class AccountService {
     private final AccountMapper mapper;
     private final AccountRepository accountRepository;
     private final RestClient notificationsRestClient;
+    private final ProcessedTransactionRepository processedTransactionRepository;
 
     public AccountDto getAccount(String login) {
         log.info("Getting account by login: {}", login);
@@ -75,7 +78,11 @@ public class AccountService {
     }
 
     @Transactional
-    public void decreaseBalance(String login, BigDecimal amount) {
+    public void decreaseBalance(String login, BigDecimal amount, String transactionId) {
+        if (processedTransactionRepository.existsById(transactionId)) {
+            log.info("Transaction {} already processed (decrease), skipping", transactionId);
+            return;
+        }
         log.info("Decreasing balance for {} by {}", login, amount);
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
@@ -86,18 +93,24 @@ public class AccountService {
 
         account.setBalance(account.getBalance().subtract(amount));
         accountRepository.save(account);
+        processedTransactionRepository.save(new ProcessedTransaction(transactionId));
 
         sendNotification(login, "С вашего счета списано: " + amount + " руб.", "BALANCE_DECREASE");
     }
 
     @Transactional
-    public void increaseBalance(String login, BigDecimal amount) {
+    public void increaseBalance(String login, BigDecimal amount, String transactionId) {
+        if (processedTransactionRepository.existsById(transactionId)) {
+            log.info("Transaction {} already processed (increase), skipping", transactionId);
+            return;
+        }
         log.info("Increasing balance for {} by {}", login, amount);
         Account account = accountRepository.findByLogin(login)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for login: " + login));
 
         account.setBalance(account.getBalance().add(amount));
         accountRepository.save(account);
+        processedTransactionRepository.save(new ProcessedTransaction(transactionId));
 
         sendNotification(login, "На ваш счет зачислено: " + amount + " руб.", "BALANCE_INCREASE");
     }

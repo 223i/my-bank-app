@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +22,11 @@ public class CashService {
 
     public void processOperation(String login, BigDecimal amount, String type) {
         String uri = type.equalsIgnoreCase("PUT") ? "/increase-balance" : "/decrease-balance";
+        String transactionId = UUID.randomUUID().toString();
 
         try {
-            // 1. Запрос в Accounts
-            callAccountsService(login, amount, uri);
+            // 1. Запрос в Accounts (идемпотентно благодаря transactionId)
+            callAccountsService(login, amount, uri, transactionId);
 
             // 2. Уведомление
             String msg = type.equalsIgnoreCase("PUT") ? "Пополнение на " : "Снятие ";
@@ -46,11 +48,12 @@ public class CashService {
                 .toBodilessEntity();
     }
 
-
+    @Retry(name = "accountsService")
     @CircuitBreaker(name = "accountsService", fallbackMethod = "accountsFallback")
-    private void callAccountsService(String login, BigDecimal amount, String uri) {
+    private void callAccountsService(String login, BigDecimal amount, String uri, String transactionId) {
         accountsRestClient.patch()
-                .uri("/{login}" + uri + "?amount={amount}", login, amount)
+                .uri("/{login}" + uri + "?amount={amount}&transactionId={transactionId}",
+                        login, amount, transactionId)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
                     throw new RuntimeException("Ошибка Accounts: " + res.getStatusCode());
@@ -58,8 +61,9 @@ public class CashService {
                 .toBodilessEntity();
     }
 
-    public void accountsFallback(Throwable ex) {
-        log.error("Accounts service unavailable: {}", ex.getMessage());
+    public void accountsFallback(String login, BigDecimal amount, String uri,
+                                 String transactionId, Throwable ex) {
+        log.error("Accounts service unavailable: transactionId={}", transactionId, ex);
         throw new RuntimeException("Accounts service временно недоступен. Попробуйте повторить операцию позже");
     }
 

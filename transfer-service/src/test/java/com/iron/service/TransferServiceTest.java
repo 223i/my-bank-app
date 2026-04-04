@@ -7,13 +7,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -36,16 +40,88 @@ class TransferServiceTest {
         transferService = new TransferService(accountsRestClient, notificationsRestClient);
     }
 
-    @Test
-    @DisplayName("Should throw TransferException when accounts service fails")
-    void makeTransfer_throwsWhenAccountsServiceFails() {
-        // Mock accounts service to throw exception
+    // ─── helpers ─────────────────────────────────────────────────────────────
+
+    private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {
         RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
         RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
         RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
-        
         when(accountsRestClient.patch()).thenReturn(uriSpec);
-        when(uriSpec.uri(anyString(), any(), any())).thenReturn(bodySpec);
+        when(uriSpec.uri(anyString(), any(), any(), any())).thenReturn(bodySpec);
+        when(bodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenReturn(ResponseEntity.ok().build());
+        return uriSpec;
+    }
+
+    private void mockNotificationsChainSuccess() {
+        RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
+        RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+        when(notificationsRestClient.post()).thenReturn(uriSpec);
+        when(uriSpec.uri(anyString())).thenReturn(bodySpec);
+        when(bodySpec.body(any())).thenReturn(bodySpec);
+        when(bodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenReturn(ResponseEntity.ok().build());
+    }
+
+    // ─── successful transfer ──────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Should call decrease then increase with -debit / -credit transactionId suffixes")
+    void makeTransfer_passesTransactionIdWithCorrectSuffixes() {
+        RestClient.RequestBodyUriSpec uriSpec = mockAccountsChainSuccess();
+        mockNotificationsChainSuccess();
+
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100));
+
+        // Два вызова: debit и credit
+        verify(accountsRestClient, times(2)).patch();
+
+        // Захватываем URI шаблоны и аргументы
+        ArgumentCaptor<String> uriCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Object> arg3Captor = ArgumentCaptor.forClass(Object.class);
+        verify(uriSpec, times(2)).uri(uriCaptor.capture(), any(), any(), arg3Captor.capture());
+
+        List<String> uris = uriCaptor.getAllValues();
+        List<Object> txIds = arg3Captor.getAllValues();
+
+        assertThat(uris.get(0)).contains("decrease-balance");
+        assertThat(uris.get(1)).contains("increase-balance");
+        assertThat(txIds.get(0).toString()).endsWith("-debit");
+        assertThat(txIds.get(1).toString()).endsWith("-credit");
+    }
+
+    @Test
+    @DisplayName("Should generate a unique transactionId per transfer")
+    void makeTransfer_generatesUniqueTransactionIdPerCall() {
+        RestClient.RequestBodyUriSpec uriSpec = mockAccountsChainSuccess();
+        mockNotificationsChainSuccess();
+
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
+
+        ArgumentCaptor<Object> arg3Captor = ArgumentCaptor.forClass(Object.class);
+        // 4 total calls: 2 per transfer
+        verify(uriSpec, times(4)).uri(anyString(), any(), any(), arg3Captor.capture());
+
+        List<Object> txIds = arg3Captor.getAllValues();
+        // Первый debit и третий debit должны иметь разные базовые UUID
+        String firstBase = txIds.get(0).toString().replace("-debit", "");
+        String secondBase = txIds.get(2).toString().replace("-debit", "");
+        assertThat(firstBase).isNotEqualTo(secondBase);
+    }
+
+    // ─── failure scenarios ───────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Should throw TransferException when accounts service fails (no rollback)")
+    void makeTransfer_throwsWhenAccountsServiceFails() {
+        RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
+        RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+
+        when(accountsRestClient.patch()).thenReturn(uriSpec);
+        when(uriSpec.uri(anyString(), any(), any(), any())).thenReturn(bodySpec);
         when(bodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.toBodilessEntity())
                 .thenThrow(new RestClientException("accounts-service unavailable"));
@@ -54,54 +130,30 @@ class TransferServiceTest {
                 .isInstanceOf(TransferException.class)
                 .hasMessageContaining("accounts-service unavailable");
 
-        verify(accountsRestClient, times(2)).patch();
+        // Только debit вызов — rollback отсутствует (идемпотентный retry заменяет его)
+        verify(accountsRestClient, times(1)).patch();
         verifyNoInteractions(notificationsRestClient);
     }
 
     @Test
-    @DisplayName("Should throw TransferException when notification service fails")
-    void makeTransfer_throwsWhenNotificationServiceFails() {
-        // Mock first accounts call to succeed
-        RestClient.RequestBodyUriSpec decreaseUriSpec = mock(RestClient.RequestBodyUriSpec.class);
-        RestClient.RequestBodySpec decreaseBodySpec = mock(RestClient.RequestBodySpec.class);
-        RestClient.ResponseSpec decreaseResponseSpec = mock(RestClient.ResponseSpec.class);
-        
-        when(accountsRestClient.patch()).thenReturn(decreaseUriSpec);
-        when(decreaseUriSpec.uri(anyString(), any(), any())).thenReturn(decreaseBodySpec);
-        when(decreaseBodySpec.retrieve()).thenReturn(decreaseResponseSpec);
-        when(decreaseResponseSpec.toBodilessEntity())
-                .thenThrow(new RestClientException("First call failed"));
-
-        assertThatThrownBy(() -> transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100)))
-                .isInstanceOf(TransferException.class)
-                .hasMessageContaining("First call failed");
-
-        verify(accountsRestClient, times(2)).patch();
-        verifyNoInteractions(notificationsRestClient);
-    }
-
-    @Test
-    @DisplayName("Should handle RestClient exceptions properly")
+    @DisplayName("Should throw TransferException when connection refused (no rollback)")
     void makeTransfer_handlesRestClientExceptions() {
-        // Mock accounts service to throw RestClientException
         when(accountsRestClient.patch()).thenThrow(new RestClientException("Connection refused"));
 
         assertThatThrownBy(() -> transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100)))
                 .isInstanceOf(TransferException.class)
                 .hasMessageContaining("Connection refused");
 
-        verify(accountsRestClient, times(2)).patch();
+        verify(accountsRestClient, times(1)).patch();
         verifyNoInteractions(notificationsRestClient);
     }
+
+    // ─── validation ──────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Should throw SelfTransferException when transferring to same account")
     void makeTransfer_throwsSelfTransferException() {
-        String fromLogin = "jdoe";
-        String toLogin = "jdoe";
-        BigDecimal amount = BigDecimal.valueOf(100);
-
-        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+        assertThatThrownBy(() -> transferService.makeTransfer("jdoe", "jdoe", BigDecimal.valueOf(100)))
                 .isInstanceOf(SelfTransferException.class)
                 .hasMessage("Cannot transfer to the same account")
                 .extracting("errorCode")
@@ -114,11 +166,7 @@ class TransferServiceTest {
     @Test
     @DisplayName("Should throw InvalidTransferAmountException when amount is zero")
     void makeTransfer_throwsInvalidTransferAmountExceptionWhenAmountIsZero() {
-        String fromLogin = "jdoe";
-        String toLogin = "alice_99";
-        BigDecimal amount = BigDecimal.ZERO;
-
-        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+        assertThatThrownBy(() -> transferService.makeTransfer("jdoe", "alice_99", BigDecimal.ZERO))
                 .isInstanceOf(InvalidTransferAmountException.class)
                 .hasMessage("Amount must be positive")
                 .extracting("errorCode")
@@ -131,28 +179,7 @@ class TransferServiceTest {
     @Test
     @DisplayName("Should throw InvalidTransferAmountException when amount is negative")
     void makeTransfer_throwsInvalidTransferAmountExceptionWhenAmountIsNegative() {
-        String fromLogin = "jdoe";
-        String toLogin = "alice_99";
-        BigDecimal amount = BigDecimal.valueOf(-50);
-
-        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
-                .isInstanceOf(InvalidTransferAmountException.class)
-                .hasMessage("Amount must be positive")
-                .extracting("errorCode")
-                .isEqualTo("TRANSFER_ERROR");
-
-        verifyNoInteractions(accountsRestClient);
-        verifyNoInteractions(notificationsRestClient);
-    }
-
-    @Test
-    @DisplayName("Should throw InvalidTransferAmountException with custom error code")
-    void makeTransfer_throwsInvalidTransferAmountExceptionWithCustomErrorCode() {
-        String fromLogin = "jdoe";
-        String toLogin = "alice_99";
-        BigDecimal amount = BigDecimal.valueOf(-100);
-
-        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+        assertThatThrownBy(() -> transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(-50)))
                 .isInstanceOf(InvalidTransferAmountException.class)
                 .hasMessage("Amount must be positive")
                 .extracting("errorCode")
@@ -165,11 +192,7 @@ class TransferServiceTest {
     @Test
     @DisplayName("Should throw SelfTransferException with custom error code")
     void makeTransfer_throwsSelfTransferExceptionWithCustomErrorCode() {
-        String fromLogin = "alice_99";
-        String toLogin = "alice_99";
-        BigDecimal amount = BigDecimal.valueOf(100);
-
-        assertThatThrownBy(() -> transferService.makeTransfer(fromLogin, toLogin, amount))
+        assertThatThrownBy(() -> transferService.makeTransfer("alice_99", "alice_99", BigDecimal.valueOf(100)))
                 .isInstanceOf(SelfTransferException.class)
                 .hasMessage("Cannot transfer to the same account")
                 .extracting("errorCode")

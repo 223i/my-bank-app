@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -26,8 +27,9 @@ public class TransferService {
         if (fromLogin.equals(toLogin)) { throw new SelfTransferException("Cannot transfer to the same account"); }
         if (amount.compareTo(BigDecimal.ZERO) <= 0) { throw new InvalidTransferAmountException("Amount must be positive"); }
 
+        String transactionId = UUID.randomUUID().toString();
         try {
-            changeBalance(fromLogin, toLogin, amount);
+            changeBalance(fromLogin, toLogin, amount, transactionId);
             sendNotification(toLogin, amount);
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());
@@ -35,40 +37,27 @@ public class TransferService {
         }
     }
 
+    // Обе операции идемпотентны: повторный retry не вызовет двойного списания/зачисления,
+    // так как accounts-service проверяет transactionId перед выполнением операции.
+    @Retry(name = "accountsService")
     @CircuitBreaker(name = "accountsService", fallbackMethod = "accountsFallback")
-    public void changeBalance(String fromLogin, String toLogin, BigDecimal amount) {
-        try {
-            // 1. списание
-            accountsRestClient.patch()
-                    .uri("/{login}/decrease-balance?amount={amount}", fromLogin, amount)
-                    .retrieve()
-                    .toBodilessEntity();
+    public void changeBalance(String fromLogin, String toLogin, BigDecimal amount, String transactionId) {
+        accountsRestClient.patch()
+                .uri("/{login}/decrease-balance?amount={amount}&transactionId={transactionId}",
+                        fromLogin, amount, transactionId + "-debit")
+                .retrieve()
+                .toBodilessEntity();
 
-            // 2. начисление
-            accountsRestClient.patch()
-                    .uri("/{login}/increase-balance?amount={amount}", toLogin, amount)
-                    .retrieve()
-                    .toBodilessEntity();
-
-        } catch (Exception e) {
-
-            log.error("Error during balance change, starting rollback", e);
-
-            try {
-                accountsRestClient.patch()
-                        .uri("/{login}/increase-balance?amount={amount}", fromLogin, amount)
-                        .retrieve()
-                        .toBodilessEntity();
-
-            } catch (Exception rollbackEx) {
-                log.error("CRITICAL: rollback failed!", rollbackEx);
-            }
-            throw e;
-        }
+        accountsRestClient.patch()
+                .uri("/{login}/increase-balance?amount={amount}&transactionId={transactionId}",
+                        toLogin, amount, transactionId + "-credit")
+                .retrieve()
+                .toBodilessEntity();
     }
 
-    public void accountsFallback(Throwable ex) {
-        log.error("Accounts service unavailable", ex);
+    public void accountsFallback(String fromLogin, String toLogin, BigDecimal amount,
+                                 String transactionId, Throwable ex) {
+        log.error("Accounts service unavailable after retries, transactionId={}", transactionId, ex);
         throw new TransferException("Accounts service временно недоступен");
     }
 

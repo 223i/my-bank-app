@@ -49,16 +49,20 @@ public class AccountController {
     @PreAuthorize("#login == authentication.name")
     @PatchMapping("/{login}/decrease-balance")
     @ResponseStatus(HttpStatus.OK)
-    public void decrease(@PathVariable String login, @RequestParam BigDecimal amount) {
-        log.debug("Decrease balance for {} by {}", login, amount);
-        accountService.decreaseBalance(login, amount);
+    public void decrease(@PathVariable String login,
+                         @RequestParam BigDecimal amount,
+                         @RequestParam String transactionId) {
+        log.debug("Decrease balance for {} by {}, transactionId={}", login, amount, transactionId);
+        accountService.decreaseBalance(login, amount, transactionId);
     }
 
     @PreAuthorize("#login == authentication.name")
     @PatchMapping("/{login}/increase-balance")
     @ResponseStatus(HttpStatus.OK)
-    public void increase(@PathVariable String login, @RequestParam BigDecimal amount) {
-        log.debug("Increase balance for {} by {}", login, amount);
-        accountService.increaseBalance(login, amount);
+    public void increase(@PathVariable String login,
+                         @RequestParam BigDecimal amount,
+                         @RequestParam String transactionId) {
+        log.debug("Increase balance for {} by {}, transactionId={}", login, amount, transactionId);
+        accountService.increaseBalance(login, amount, transactionId);
     }
 }
