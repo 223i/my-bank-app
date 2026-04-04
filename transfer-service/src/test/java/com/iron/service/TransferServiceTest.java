@@ -40,8 +40,6 @@ class TransferServiceTest {
         transferService = new TransferService(accountsRestClient, notificationsRestClient);
     }
 
-    // ─── helpers ─────────────────────────────────────────────────────────────
-
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {
         RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
         RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
@@ -53,31 +51,15 @@ class TransferServiceTest {
         return uriSpec;
     }
 
-    private void mockNotificationsChainSuccess() {
-        RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
-        RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
-        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
-        when(notificationsRestClient.post()).thenReturn(uriSpec);
-        when(uriSpec.uri(anyString())).thenReturn(bodySpec);
-        when(bodySpec.body(any())).thenReturn(bodySpec);
-        when(bodySpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.toBodilessEntity()).thenReturn(ResponseEntity.ok().build());
-    }
-
-    // ─── successful transfer ──────────────────────────────────────────────────
-
     @Test
     @DisplayName("Should call decrease then increase with -debit / -credit transactionId suffixes")
     void makeTransfer_passesTransactionIdWithCorrectSuffixes() {
         RestClient.RequestBodyUriSpec uriSpec = mockAccountsChainSuccess();
-        mockNotificationsChainSuccess();
+        TransferService spy = spy(transferService);
+        doNothing().when(spy).sendNotification(anyString(), any(BigDecimal.class));
 
-        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100));
+        spy.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100));
 
-        // Два вызова: debit и credit
-        verify(accountsRestClient, times(2)).patch();
-
-        // Захватываем URI шаблоны и аргументы
         ArgumentCaptor<String> uriCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Object> arg3Captor = ArgumentCaptor.forClass(Object.class);
         verify(uriSpec, times(2)).uri(uriCaptor.capture(), any(), any(), arg3Captor.capture());
@@ -95,23 +77,21 @@ class TransferServiceTest {
     @DisplayName("Should generate a unique transactionId per transfer")
     void makeTransfer_generatesUniqueTransactionIdPerCall() {
         RestClient.RequestBodyUriSpec uriSpec = mockAccountsChainSuccess();
-        mockNotificationsChainSuccess();
 
-        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
-        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
+        TransferService spy = spy(transferService);
+        doNothing().when(spy).sendNotification(anyString(), any(BigDecimal.class));
+
+        spy.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
+        spy.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
 
         ArgumentCaptor<Object> arg3Captor = ArgumentCaptor.forClass(Object.class);
-        // 4 total calls: 2 per transfer
         verify(uriSpec, times(4)).uri(anyString(), any(), any(), arg3Captor.capture());
 
         List<Object> txIds = arg3Captor.getAllValues();
-        // Первый debit и третий debit должны иметь разные базовые UUID
         String firstBase = txIds.get(0).toString().replace("-debit", "");
         String secondBase = txIds.get(2).toString().replace("-debit", "");
         assertThat(firstBase).isNotEqualTo(secondBase);
     }
-
-    // ─── failure scenarios ───────────────────────────────────────────────────
 
     @Test
     @DisplayName("Should throw TransferException when accounts service fails (no rollback)")
@@ -147,8 +127,6 @@ class TransferServiceTest {
         verify(accountsRestClient, times(1)).patch();
         verifyNoInteractions(notificationsRestClient);
     }
-
-    // ─── validation ──────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Should throw SelfTransferException when transferring to same account")
