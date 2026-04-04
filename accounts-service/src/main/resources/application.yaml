@@ -64,3 +64,17 @@ management:
   endpoint:
     health:
       show-details: always
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      notificationsService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+  retry:
+    instances:
+      notificationsService:
+        maxAttempts: 3
+        waitDuration: 500ms

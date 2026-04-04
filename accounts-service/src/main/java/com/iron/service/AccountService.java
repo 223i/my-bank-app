@@ -8,6 +8,8 @@ import com.iron.exception.AccountNotFoundException;
 import com.iron.mapper.AccountMapper;
 import com.iron.model.Account;
 import com.iron.repository.AccountRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,16 +109,27 @@ public class AccountService {
                 .type(type)
                 .build();
         try {
-            notificationsRestClient.post()
-                    .uri("/api/notifications/send")
-                    .body(request)
-                    .retrieve()
-                    .toBodilessEntity();
-            log.info("Notification sent to {} about {}", login, type);
+            sendNotification(login, type, request);
         } catch (Exception e) {
             // Не прерываем основную операцию из-за ошибки уведомления
             log.error("Failed to send notification to {}: {}", login, e.getMessage());
         }
+    }
+
+    @Retry(name = "notificationsService")
+    @CircuitBreaker(name = "notificationsService", fallbackMethod = "notificationsFallback")
+    private void sendNotification(String login, String type, NotificationRequest request) {
+        notificationsRestClient.post()
+                .uri("/api/notifications/send")
+                .body(request)
+                .retrieve()
+                .toBodilessEntity();
+        log.info("Notification sent to {} about {}", login, type);
+    }
+
+    public void notificationsFallback(Throwable ex) {
+        log.error("Notifications service unavailable: {}", ex.getMessage());
+        throw new RuntimeException("Notifications service временно недоступен. Попробуйте повторить операцию позже");
     }
 
     private void validateAge(LocalDate birthday) {

@@ -54,7 +54,7 @@ class TransferServiceTest {
                 .isInstanceOf(TransferException.class)
                 .hasMessageContaining("accounts-service unavailable");
 
-        verify(accountsRestClient, times(1)).patch();
+        verify(accountsRestClient, times(2)).patch();
         verifyNoInteractions(notificationsRestClient);
     }
 
@@ -76,7 +76,7 @@ class TransferServiceTest {
                 .isInstanceOf(TransferException.class)
                 .hasMessageContaining("First call failed");
 
-        verify(accountsRestClient, times(1)).patch();
+        verify(accountsRestClient, times(2)).patch();
         verifyNoInteractions(notificationsRestClient);
     }
 
@@ -90,7 +90,7 @@ class TransferServiceTest {
                 .isInstanceOf(TransferException.class)
                 .hasMessageContaining("Connection refused");
 
-        verify(accountsRestClient, times(1)).patch();
+        verify(accountsRestClient, times(2)).patch();
         verifyNoInteractions(notificationsRestClient);
     }
 
