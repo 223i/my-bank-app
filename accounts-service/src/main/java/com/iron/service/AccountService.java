@@ -15,6 +15,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -26,6 +27,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@EnableMethodSecurity
 public class AccountService {
 
     private static final int MIN_AGE = 18;
