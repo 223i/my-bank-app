@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: transfer-service
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: 8500
+      discovery:
+        service-name: transfer-service
+        enabled: true
+        register: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+      config:
+        enabled: true
+        prefix: config
+        defaultContext: application
+  config:
+    import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  security:
+    oauth2:
+      client:
+        registration:
+          transfer-service-client:
+            provider: keycloak
+            client-id: transfer-service-client
+            client-secret: ${TRANSFER_CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid, profile
+        provider:
+          keycloak:
+            token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+
+services:
+  accounts-url: ${ACCOUNTS_SERVICE_URL:http://accounts-service:8081}
+  notifications-url: ${NOTIFICATIONS_SERVICE_URL:http://notifications-service:8082}
+
+server:
+  port: ${SERVER_PORT:8085}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      accountsService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+      notificationsService:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+  retry:
+    instances:
+      accountsService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        # Retry только на сетевые/серверные ошибки; 4xx (напр. недостаточно средств) не ретраить
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+        ignoreExceptions:
+          - org.springframework.web.client.HttpClientErrorException

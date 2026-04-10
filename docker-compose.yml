@@ -1,0 +1,222 @@
+services:
+  # --- Инфраструктура ---
+  consul:
+    image: hashicorp/consul:1.15.4
+    container_name: consul
+    ports:
+      - "8500:8500"
+    command: "agent -dev -client=0.0.0.0"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8500/v1/status/leader"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - microservices-network
+
+  # Заполняет Consul KV общей конфигурацией (Keycloak URLs).
+  # Запускается один раз после того, как Consul готов, и завершается.
+  # Сервисы через spring.config.import подхватывают эти значения.
+  consul-config-init:
+    image: hashicorp/consul:1.15.4
+    depends_on:
+      consul:
+        condition: service_healthy
+    environment:
+      - CONSUL_HTTP_ADDR=consul:8500
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        consul kv put config/application/keycloak.jwk-set-uri \
+          "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs" &&
+        consul kv put config/application/keycloak.token-uri \
+          "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token" &&
+        echo "==> Consul KV initialized"
+    restart: "no"
+    networks:
+      - microservices-network
+
+  common-db:
+    image: postgres:16
+    container_name: common-db
+    environment:
+      POSTGRES_DB: ${COMMON_DB_NAME}
+      POSTGRES_USER: ${COMMON_DB_USERNAME}
+      POSTGRES_PASSWORD: ${COMMON_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${COMMON_DB_USERNAME} -d ${COMMON_DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    command: start-dev --import-realm --optimized
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_NAME}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./bank-app-realm.json:/opt/keycloak/data/import/bank-app-realm.json
+    networks:
+      microservices-network:
+        aliases:
+          - keycloak-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- Микросервисы ---
+  # Keycloak URLs (keycloak.jwk-set-uri, keycloak.token-uri) поставляются
+  # через Consul KV, а не через env vars — убирает дублирование конфига.
+  # Секреты (CLIENT_SECRET, KEYCLOAK_ADMIN_*) остаются в env vars — в KV не хранятся.
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_DISCOVERY_HOSTNAME=gateway-service
+      - SPRING_CLOUD_CONSUL_DISCOVERY_PREFER-IP-ADDRESS=false
+    depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_started
+      consul:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  accounts-service:
+    build:
+      context: .
+      dockerfile: accounts-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
+      - SERVER_PORT=8081
+      - CLIENT_SECRET=${CLIENT_SECRET}
+    depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
+      common-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  notifications-service:
+    build:
+      context: .
+      dockerfile: notifications-service/Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://common-db:5432/${COMMON_DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${COMMON_DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${COMMON_DB_PASSWORD}
+      - SERVER_PORT=8082
+    depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
+      common-db:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  transfer-service:
+    build:
+      context: .
+      dockerfile: transfer-service/Dockerfile
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - TRANSFER_CLIENT_SECRET=${TRANSFER_CLIENT_SECRET}
+      - SERVER_PORT=8085
+    depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
+      accounts-service:
+        condition: service_started
+      consul:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  cash-service:
+    build:
+      context: .
+      dockerfile: cash-service/Dockerfile
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - CASH_CLIENT_SECRET=${CASH_CLIENT_SECRET}
+      - SERVER_PORT=8084
+    depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
+      accounts-service:
+        condition: service_started
+      consul:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  my-bank-front-app:
+    build:
+      context: .
+      dockerfile: my-bank-front-app/Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - CONSUL_ENABLED=true
+      - CONSUL_DISCOVERY_ENABLED=true
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_ID=my-bank-front-app
+      - SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_CLIENT_SECRET=${FRONTEND_CLIENT_SECRET}
+      - KEYCLOAK_FRONTEND_URL=http://localhost:8080
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080
+      - SERVER_PORT=8083
+    depends_on:
+      consul-config-init:
+        condition: service_completed_successfully
+      gateway-service:
+        condition: service_started
+      accounts-service:
+        condition: service_started
+      notifications-service:
+        condition: service_started
+      transfer-service:
+        condition: service_started
+      cash-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge

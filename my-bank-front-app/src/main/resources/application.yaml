@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: my-bank-front-app
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: ${OAUTH2_CLIENT_ID:my-bank-front-app}
+            client-secret: ${FRONTEND_CLIENT_SECRET:frontend-secret-default}
+            scope: ${OAUTH2_CLIENT_SCOPE:openid,profile,email,roles}
+            authorization-grant-type: ${OAUTH2_GRANT_TYPE:authorization_code}
+            redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:8083/login/oauth2/code/keycloak}
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_FRONTEND_URL:http://localhost:8080}/realms/bank-app-realm/protocol/openid-connect/auth
+            token-uri: ${KEYCLOAK_INTERNAL_URL:http://localhost:8080}/realms/bank-app-realm/protocol/openid-connect/token
+            user-info-uri: ${KEYCLOAK_INTERNAL_URL:http://localhost:8080}/realms/bank-app-realm/protocol/openid-connect/userinfo
+            jwk-set-uri: ${KEYCLOAK_INTERNAL_URL:http://localhost:8080}/realms/bank-app-realm/protocol/openid-connect/certs
+            user-name-attribute: preferred_username
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:false}
+      host: ${CONSUL_HOST:127.0.0.1}
+      port: ${CONSUL_PORT:8500}
+      discovery:
+        enabled: ${CONSUL_DISCOVERY_ENABLED:false}
+        register: ${CONSUL_REGISTER:false}
+        health-check-path: /actuator/health
+        instance-id: ${spring.application.name}:${random.value}
+        hostname: ${spring.application.name}
+        service-name: my-bank-front-app
+        prefer-ip-address: ${CONSUL_PREFER_IP:false}
+      config:
+        enabled: ${CONSUL_CONFIG_ENABLED:false}
+        prefix: config
+        defaultContext: application
+
+server:
+  port: ${SERVER_PORT:8083}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

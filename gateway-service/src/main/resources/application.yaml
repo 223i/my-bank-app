@@ -1,0 +1,61 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
+      port: 8500
+      discovery:
+        service-name: gateway-service
+        enabled: true
+        register: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        prefer-ip-address: false
+        instance-id: ${spring.application.name}:${random.value}
+        hostname: ${spring.application.name}
+      config:
+        enabled: true
+        prefix: config
+        defaultContext: application
+    gateway:
+      default-filters:
+        - TokenRelay
+      routes:
+        - id: accounts-route
+          uri: lb://accounts-service
+          predicates:
+            - Path=/api/accounts/**
+          filters:
+            - RewritePath=/api/accounts(?<segment>.*), /account${segment}
+
+        - id: notifications-route
+          uri: lb://notifications-service
+          predicates:
+            - Path=/api/notifications/**
+
+        - id: transfer-route
+          uri: lb://transfer-service
+          predicates:
+            - Path=/api/transfer/**
+          filters:
+            - RewritePath=/api/transfer(?<segment>.*), /transfer${segment}
+
+        - id: cash-route
+          uri: lb://cash-service
+          predicates:
+            - Path=/api/cash/**
+          filters:
+            - RewritePath=/api/cash(?<segment>.*), /cash${segment}
+
+  config:
+    import: "optional:consul:${spring.cloud.consul.host}:${spring.cloud.consul.port}"
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
