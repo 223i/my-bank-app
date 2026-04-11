@@ -1,0 +1,12 @@
+image:
+  repository: postgres
+  tag: "16"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 5432
+
+env:
+  database: "bank_db"
+  user: "postgres"

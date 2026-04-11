@@ -1,0 +1,12 @@
+dependencies:
+- name: accounts-service
+  repository: file://./charts/accounts-service
+  version: 0.1.0
+- name: common-db
+  repository: file://./charts/common-db
+  version: 0.1.0
+- name: keycloak
+  repository: file://./charts/keycloak
+  version: 0.1.0
+digest: sha256:09d2e9f5b3649a5e292e86adf197f216c3c0272b6a857ca52d98d1fe3a76020e
+generated: "2026-04-11T20:00:21.492963+03:00"

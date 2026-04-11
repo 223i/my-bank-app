@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: "quay.io/keycloak/keycloak:24.0.0"
+          args: ["start-dev", "--import-realm"]
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: db-password # Используем тот же пароль для простоты
+            - name: KC_HOSTNAME
+              value: "localhost"
+          ports:
+            - containerPort: 8080
+              name: http
+          volumeMounts:
+            - name: realm-volume
+              mountPath: /opt/keycloak/data/import/bank-app-realm.json
+              subPath: bank-app-realm.json
+      volumes:
+        - name: realm-volume
+          secret:
+            secretName: keycloak-realm
