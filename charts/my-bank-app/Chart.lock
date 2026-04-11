@@ -20,5 +20,8 @@ dependencies:
 - name: gateway-service
   repository: file://./charts/gateway-service
   version: 0.1.0
-digest: sha256:9f3c033e78bbf84efed3131bd4bf0ca1561540bdec2ab83b86259b76d86a1267
-generated: "2026-04-11T21:33:54.75062+03:00"
+- name: my-bank-front-app
+  repository: file://./charts/my-bank-front-app
+  version: 0.1.0
+digest: sha256:a86841b489f6763417e552c852ab651c9cdd276f2c7eab469af44c70288e7407
+generated: "2026-04-11T22:08:33.379707+03:00"

@@ -1,0 +1,14 @@
+replicaCount: 1
+
+image:
+  repository: my-bank-front-app
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8083
+
+env:
+  server_port: "8083"
+  gateway_url: "http://gateway-service:8000"
+  keycloak_internal_url: "http://keycloak:8080"
+  keycloak_frontend_url: "http://localhost:8080"

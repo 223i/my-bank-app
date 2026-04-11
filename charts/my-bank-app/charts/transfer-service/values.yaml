@@ -1,5 +1,8 @@
+replicaCount: 1
+
 image:
   repository: transfer-service
+  pullPolicy: IfNotPresent
 
 service:
   port: 8085
