@@ -1,0 +1,8 @@
+image:
+  repository: cash-service
+
+service:
+  port: 8084
+
+env:
+  server_port: "8084"

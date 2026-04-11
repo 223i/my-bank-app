@@ -1,0 +1,8 @@
+image:
+  repository: transfer-service
+
+service:
+  port: 8085
+
+env:
+  server_port: "8085"
