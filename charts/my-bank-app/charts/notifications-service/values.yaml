@@ -1,0 +1,8 @@
+image:
+  repository: notifications-service
+
+service:
+  port: 8082
+
+env:
+  server_port: "8082"

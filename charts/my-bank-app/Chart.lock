@@ -8,11 +8,17 @@ dependencies:
 - name: transfer-service
   repository: file://./charts/transfer-service
   version: 0.1.0
+- name: notifications-service
+  repository: file://./charts/notifications-service
+  version: 0.1.0
 - name: common-db
   repository: file://./charts/common-db
   version: 0.1.0
 - name: keycloak
   repository: file://./charts/keycloak
   version: 0.1.0
-digest: sha256:df4e46106e7b0dfbfa5a93d1e42dc3afee90e2a9e310223f6baa6bbd6066c1c5
-generated: "2026-04-11T20:47:42.214293+03:00"
+- name: gateway-service
+  repository: file://./charts/gateway-service
+  version: 0.1.0
+digest: sha256:9f3c033e78bbf84efed3131bd4bf0ca1561540bdec2ab83b86259b76d86a1267
+generated: "2026-04-11T21:33:54.75062+03:00"

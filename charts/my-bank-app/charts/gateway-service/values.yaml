@@ -1,0 +1,26 @@
+image:
+  repository: gateway-service
+
+service:
+  port: 8080
+
+env:
+  server_port: "8080"
+  accounts_url: "http://accounts-service:8081"
+  transfer_url: "http://transfer-service:8085"
+  cash_url: "http://cash-service:8084"
+
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 5
