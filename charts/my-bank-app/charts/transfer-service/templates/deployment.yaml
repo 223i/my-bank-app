@@ -28,6 +28,8 @@ spec:
                 secretKeyRef:
                   name: bank-secrets
                   key: transfer-client-secret
+            - name: SPRING_CLOUD_CONSUL_ENABLED
+              value: "false"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

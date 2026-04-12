@@ -23,6 +23,8 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.server_port | quote }}
+            - name: SPRING_CLOUD_CONSUL_ENABLED
+              value: "false"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
