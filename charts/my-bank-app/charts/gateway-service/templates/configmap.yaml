@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-service-config
+data:
+  application.yml: |
+    spring:
+      cloud:
+        gateway:
+          default-filters:
+            - TokenRelay
+          routes:
+            - id: accounts-route
+              uri: http://accounts-service:8081
+              predicates:
+                - Path=/api/accounts/**
+              filters:
+                - RewritePath=/api/accounts(?<segment>.*), /account${segment}
+            - id: notifications-route
+              uri: http://notifications-service:8082
+              predicates:
+                - Path=/api/notifications/**
+            - id: transfer-route
+              uri: http://transfer-service:8085
+              predicates:
+                - Path=/api/transfer/**
+              filters:
+                - RewritePath=/api/transfer(?<segment>.*), /transfer${segment}
+            - id: cash-route
+              uri: http://cash-service:8084
+              predicates:
+                - Path=/api/cash/**
+              filters:
+                - RewritePath=/api/cash(?<segment>.*), /cash${segment}
+    keycloak:
+      jwk-set-uri: http://keycloak:8080/auth/realms/bank-app-realm/protocol/openid-connect/certs

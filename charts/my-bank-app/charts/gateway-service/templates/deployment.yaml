@@ -25,6 +25,11 @@ spec:
               value: {{ .Values.env.server_port | quote }}
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
+            - name: SPRING_CONFIG_ADDITIONAL_LOCATION
+              value: "file:/config/"
+          volumeMounts:
+            - name: gateway-config
+              mountPath: /config
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
@@ -33,3 +38,7 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        - name: gateway-config
+          configMap:
+            name: gateway-service-config

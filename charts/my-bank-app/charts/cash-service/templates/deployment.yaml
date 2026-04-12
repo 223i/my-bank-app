@@ -21,15 +21,6 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
-            - name: SPRING_DATASOURCE_URL
-              value: {{ .Values.env.spring_datasource_url | quote }}
-            - name: SPRING_DATASOURCE_USERNAME
-              value: "postgres"
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: bank-secrets
-                  key: db-password
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
             - name: CASH_CLIENT_SECRET
@@ -37,6 +28,10 @@ spec:
                 secretKeyRef:
                   name: bank-secrets
                   key: cash-client-secret
+            - name: KEYCLOAK_JWK_SET_URI
+              value: "http://keycloak:8080/auth/realms/bank-app-realm/protocol/openid-connect/certs"
+            - name: KEYCLOAK_TOKEN_URI
+              value: "http://keycloak:8080/auth/realms/bank-app-realm/protocol/openid-connect/token"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

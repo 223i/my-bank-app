@@ -32,6 +32,15 @@ spec:
                   key: db-password
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: client-secret
+            - name: KEYCLOAK_JWK_SET_URI
+              value: "http://keycloak:8080/auth/realms/bank-app-realm/protocol/openid-connect/certs"
+            - name: KEYCLOAK_TOKEN_URI
+              value: "http://keycloak:8080/auth/realms/bank-app-realm/protocol/openid-connect/token"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
