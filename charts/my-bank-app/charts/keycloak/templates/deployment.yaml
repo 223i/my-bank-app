@@ -25,15 +25,7 @@ spec:
                   name: bank-secrets
                   key: db-password # Используем тот же пароль для простоты
             - name: KC_HOSTNAME
-              value: "bank.local"
-            - name: KC_HOSTNAME_STRICT
-              value: "false"
-            - name: KC_HOSTNAME_STRICT_HTTPS
-              value: "false"
-            - name: KC_HTTP_ENABLED
-              value: "true"
-            - name: KC_HTTP_RELATIVE_PATH
-              value: "/auth"
+              value: "localhost"
           ports:
             - containerPort: 8080
               name: http

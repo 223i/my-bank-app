@@ -1002,12 +1002,10 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "pMEO4Ps4TeiP2RwzB0wkvvzHOxxKiEZp",
       "redirectUris": [
-        "http://localhost:8083/login/oauth2/code/keycloak",
-        "http://bank.local/login/oauth2/code/keycloak"
+        "http://localhost:8083/login/oauth2/code/keycloak"
       ],
       "webOrigins": [
-        "http://localhost:8083",
-        "http://bank.local"
+        "http://localhost:8083"
       ],
       "notBefore": 0,
       "bearerOnly": false,

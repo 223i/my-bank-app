@@ -34,8 +34,6 @@ spec:
               value: {{ .Values.env.keycloak_internal_url | quote }}
             - name: KEYCLOAK_FRONTEND_URL
               value: {{ .Values.env.keycloak_frontend_url | quote }}
-            - name: OAUTH2_REDIRECT_URI
-              value: "http://bank.local/login/oauth2/code/keycloak"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
