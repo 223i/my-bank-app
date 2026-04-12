@@ -1,11 +1,13 @@
 replicaCount: 1
 
 image:
-  repository: notifications-service
+  repository: my-bank-app-notifications-service
   pullPolicy: IfNotPresent
+  tag: "latest"
 
 service:
   port: 8082
 
 env:
   server_port: "8082"
+  spring_datasource_url: "jdbc:postgresql://common-db:5432/bank_db"

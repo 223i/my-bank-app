@@ -1,8 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: gateway-service
+  repository: my-bank-app-gateway-service
   pullPolicy: IfNotPresent
+  tag: "latest"
 
 service:
   port: 8080

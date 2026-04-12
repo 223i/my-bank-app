@@ -1,8 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: cash-service
+  repository: my-bank-app-cash-service
   pullPolicy: IfNotPresent
+  tag: "latest"
 
 service:
   port: 8084

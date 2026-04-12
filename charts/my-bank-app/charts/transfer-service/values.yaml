@@ -1,8 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: transfer-service
+  repository: my-bank-app-transfer-service
   pullPolicy: IfNotPresent
+  tag: "latest"
 
 service:
   port: 8085

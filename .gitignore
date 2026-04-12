@@ -110,3 +110,14 @@ logs/
 # Application specific
 application-local.properties
 application-dev.properties
+
+
+# Helm archives (те самые .tgz)
+*.tgz
+
+#  Helm dependencies
+charts/*.tgz
+charts/tmp/
+
+# local Helm setup
+.helm/

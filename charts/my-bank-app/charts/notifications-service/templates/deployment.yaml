@@ -28,6 +28,17 @@ spec:
                 secretKeyRef:
                   name: bank-secrets
                   key: transfer-client-secret
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.env.spring_datasource_url | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: db-password
+            - name: SPRING_CLOUD_CONSUL_ENABLED
+              value: "false"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

@@ -1,8 +1,9 @@
 replicaCount: 1
 
 image:
-  repository: my-bank-front-app
+  repository: my-bank-app-my-bank-front-app
   pullPolicy: IfNotPresent
+  tag: "latest"
 
 service:
   port: 8083

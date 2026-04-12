@@ -21,8 +21,17 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
-            - name: SERVER_PORT
-              value: {{ .Values.env.server_port | quote }}
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.env.spring_datasource_url | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "postgres"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: db-password
+            - name: SPRING_CLOUD_CONSUL_ENABLED
+              value: "false"
             - name: CASH_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
