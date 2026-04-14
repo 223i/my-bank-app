@@ -1,26 +1,16 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "my-bank-front-app.fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
-{{- if and .Values.ingress.className (not (eq .Values.ingress.className "nginx")) }}
 apiVersion: networking.k8s.io/v1
-{{- else if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" }}
-apiVersion: networking.k8s.io/v1beta1
-{{- else }}
-apiVersion: extensions/v1beta1
-{{- end }}
 kind: Ingress
 metadata:
-  name: {{ $fullName }}
+  name: my-bank-front-app
   labels:
-    {{- include "my-bank-front-app.labels" . | nindent 4 }}
+    app: my-bank-front-app
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if and .Values.ingress.className (not (eq .Values.ingress.className "nginx")) }}
-  ingressClassName: {{ .Values.ingress.className }}
-  {{- end }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
   {{- if .Values.ingress.tls }}
   tls:
     {{- range .Values.ingress.tls }}
@@ -38,19 +28,12 @@ spec:
         paths:
           {{- range .paths }}
           - path: {{ .path }}
-            {{- if and .pathType (eq $.Capabilities.APIVersion "networking.k8s.io/v1") }}
             pathType: {{ .pathType }}
-            {{- end }}
             backend:
-              {{- if eq $.Capabilities.APIVersion "networking.k8s.io/v1" }}
               service:
-                name: {{ $fullName }}
+                name: my-bank-front-app
                 port:
-                  number: {{ $svcPort }}
-              {{- else }}
-              serviceName: {{ $fullName }}
-              servicePort: {{ $svcPort }}
-              {{- end }}
+                  number: {{ $.Values.service.port }}
           {{- end }}
     {{- end }}
 {{- end }}

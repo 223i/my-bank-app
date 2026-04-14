@@ -11,8 +11,8 @@ service:
 env:
   server_port: "8083"
   gateway_url: "http://gateway-service:8000"
-  keycloak_internal_url: "http://keycloak:8080/auth"
-  keycloak_frontend_url: "http://bank.local/auth"
+  keycloak_internal_url: "http://keycloak:8080"
+  keycloak_frontend_url: "http://keycloak.bank.local"
 
 ingress:
   enabled: true

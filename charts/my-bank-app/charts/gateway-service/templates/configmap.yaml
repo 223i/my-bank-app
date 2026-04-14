@@ -33,4 +33,4 @@ data:
               filters:
                 - RewritePath=/api/cash(?<segment>.*), /cash${segment}
     keycloak:
-      jwk-set-uri: http://keycloak:8080/auth/realms/bank-app-realm/protocol/openid-connect/certs
+      jwk-set-uri: http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs

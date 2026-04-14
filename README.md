@@ -194,6 +194,70 @@ cd my-bank-front-app && ./mvnw spring-boot:run
   - Логин: `admin`
   - Пароль: `admin`
 
+## ☸️ Kubernetes / Helm
+
+### Prerequisites
+
+- Docker
+- Kubernetes cluster (minikube / kind / etc.)
+- `kubectl` + `helm` ≥ 3.8
+- nginx-ingress controller installed
+- `/etc/hosts` entries: `127.0.0.1 bank.local keycloak.bank.local`
+
+### 1. Build images
+
+```bash
+# Run from repo root; builds each service into a local image
+IMAGE_TAG=latest
+
+for svc in gateway-service accounts-service cash-service transfer-service notifications-service my-bank-front-app; do
+  docker build -f ${svc}/Dockerfile -t my-bank-app-${svc}:${IMAGE_TAG} .
+done
+```
+
+If using minikube:
+```bash
+eval $(minikube docker-env)   # point docker to minikube daemon, then re-run builds above
+```
+
+### 2. Install
+
+```bash
+helm install bank ./charts/my-bank-app \
+  --namespace bank --create-namespace \
+  --wait --timeout 5m
+```
+
+### 3. Verify
+
+```bash
+# All pods Running
+kubectl get pods -n bank
+
+# Run Helm tests (actuator/health checks on all services)
+helm test bank -n bank
+
+# Check Keycloak realm loaded
+kubectl logs -n bank -l app=keycloak | grep "bank-app-realm"
+```
+
+### 4. Access
+
+| Endpoint | URL |
+|----------|-----|
+| Front UI | http://bank.local |
+| API (via gateway) | http://bank.local/api/... |
+| Keycloak admin | http://keycloak.bank.local/admin (admin / password) |
+
+### 5. Uninstall
+
+```bash
+helm uninstall bank -n bank
+kubectl delete pvc -n bank --all   # removes Postgres data
+```
+
+---
+
 ## 🧪 Тестирование
 
 ### Запуск тестов

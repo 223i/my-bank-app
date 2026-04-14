@@ -23,12 +23,34 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: bank-secrets
-                  key: db-password # Используем тот же пароль для простоты
+                  key: db-password
             - name: KC_HOSTNAME
-              value: "localhost"
+              value: "keycloak.bank.local"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_PROXY_HEADERS
+              value: "xforwarded"
           ports:
             - containerPort: 8080
               name: http
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
           volumeMounts:
             - name: realm-volume
               mountPath: /opt/keycloak/data/import/bank-app-realm.json

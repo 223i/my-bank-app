@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-pods-ready"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-gateway
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://gateway-service:8000/actuator/health | grep -q '"status":"UP"' || exit 1
+    - name: test-accounts
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://accounts-service:8081/actuator/health | grep -q '"status":"UP"' || exit 1
+    - name: test-notifications
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://notifications-service:8082/actuator/health | grep -q '"status":"UP"' || exit 1
+    - name: test-cash
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://cash-service:8084/actuator/health | grep -q '"status":"UP"' || exit 1
+    - name: test-transfer
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://transfer-service:8085/actuator/health | grep -q '"status":"UP"' || exit 1
+    - name: test-keycloak
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          wget -qO- http://keycloak:8080/realms/bank-app-realm/.well-known/openid-configuration | grep -q '"issuer"' || exit 1
