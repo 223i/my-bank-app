@@ -44,10 +44,11 @@
 - **Maven** - система сборки
 
 ### Инфраструктура
-- **Docker & Docker Compose** - контейнеризация
+- **Docker & Docker Compose** - контейнеризация (локальная разработка)
+- **Kubernetes + Helm** - оркестрация контейнеров
 - **PostgreSQL** - база данных
-- **Keycloak** - сервер авторизации
-- **Consul** - сервис-дискавери
+- **Keycloak** - сервер авторизации (OAuth 2.0 / OIDC)
+- **nginx-ingress** - внешний доступ к кластеру
 - **MapStruct** - маппинг объектов
 - **Lombok** - уменьшение шаблонного кода
 
@@ -194,66 +195,141 @@ cd my-bank-front-app && ./mvnw spring-boot:run
   - Логин: `admin`
   - Пароль: `admin`
 
-## ☸️ Kubernetes / Helm
+## ☸️ Kubernetes / Helm (Minikube)
 
-### Prerequisites
+### Требования
 
 - Docker
-- Kubernetes cluster (minikube / kind / etc.)
-- `kubectl` + `helm` ≥ 3.8
-- nginx-ingress controller installed
-- `/etc/hosts` entries: `127.0.0.1 bank.local keycloak.bank.local`
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/) ≥ 1.32
+- `kubectl`
+- `helm` ≥ 3.8
 
-### 1. Build images
+---
+
+### Шаг 1 — Запуск Minikube
 
 ```bash
-# Run from repo root; builds each service into a local image
-IMAGE_TAG=latest
+# Запускаем кластер с достаточным количеством ресурсов
+minikube start --cpus=4 --memory=6g --driver=docker
 
+# Включаем nginx-ingress контроллер
+minikube addons enable ingress
+
+# Проверяем, что ingress-контроллер запустился
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+```
+
+---
+
+### Шаг 2 — Настройка /etc/hosts
+
+В отдельном терминале запускаем туннель Minikube (держим открытым всё время работы):
+
+```bash
+minikube tunnel
+```
+
+Добавляем записи в `/etc/hosts` (один раз):
+
+```bash
+echo "127.0.0.1 bank.local keycloak.bank.local" | sudo tee -a /etc/hosts
+```
+
+---
+
+### Шаг 3 — Сборка Docker-образов
+
+Направляем Docker в реестр Minikube, чтобы образы были доступны кластеру:
+
+```bash
+eval $(minikube docker-env)
+```
+
+Собираем все сервисы из корня репозитория:
+
+```bash
 for svc in gateway-service accounts-service cash-service transfer-service notifications-service my-bank-front-app; do
-  docker build -f ${svc}/Dockerfile -t my-bank-app-${svc}:${IMAGE_TAG} .
+  docker build -f ${svc}/Dockerfile -t my-bank-app-${svc}:latest .
 done
 ```
 
-If using minikube:
+Проверяем, что образы появились:
+
 ```bash
-eval $(minikube docker-env)   # point docker to minikube daemon, then re-run builds above
+docker images | grep my-bank-app
 ```
 
-### 2. Install
+---
+
+### Шаг 4 — Установка Helm-чарта
 
 ```bash
 helm install bank ./charts/my-bank-app \
-  --namespace bank --create-namespace \
-  --wait --timeout 5m
+  --namespace bank \
+  --create-namespace \
+  --wait \
+  --timeout 8m
 ```
 
-### 3. Verify
+> Keycloak при первом запуске импортирует realm (~30–60 секунд), поэтому Spring-сервисы
+> могут перезапускаться несколько раз — это нормально. `--wait` дождётся готовности всех подов.
+
+---
+
+### Шаг 5 — Проверка
 
 ```bash
-# All pods Running
+# Состояние подов (все должны быть Running)
 kubectl get pods -n bank
 
-# Run Helm tests (actuator/health checks on all services)
-helm test bank -n bank
+# Логи конкретного пода
+kubectl logs -n bank -l app=accounts-service --tail=50
 
-# Check Keycloak realm loaded
+# Убедиться, что Keycloak загрузил realm
 kubectl logs -n bank -l app=keycloak | grep "bank-app-realm"
+
+# Запустить Helm-тесты (проверка /actuator/health всех сервисов + OIDC Keycloak)
+helm test bank -n bank --logs
 ```
 
-### 4. Access
+---
 
-| Endpoint | URL |
-|----------|-----|
-| Front UI | http://bank.local |
-| API (via gateway) | http://bank.local/api/... |
-| Keycloak admin | http://keycloak.bank.local/admin (admin / password) |
+### Шаг 6 — Доступ к приложению
 
-### 5. Uninstall
+| Компонент | URL |
+|-----------|-----|
+| Веб-интерфейс | http://bank.local |
+| API через Gateway | http://bank.local/api/accounts, /api/cash, /api/transfer, /api/notifications |
+| Keycloak Admin Console | http://keycloak.bank.local/admin |
+| Keycloak логин / пароль | `admin` / `password` |
+
+---
+
+### Обновление чарта после изменений
+
+```bash
+# Пересобрать изменённый образ (docker-env должен быть активен)
+docker build -f accounts-service/Dockerfile -t my-bank-app-accounts-service:latest .
+
+# Обновить релиз
+helm upgrade bank ./charts/my-bank-app -n bank --wait --timeout 5m
+```
+
+---
+
+### Удаление
 
 ```bash
 helm uninstall bank -n bank
-kubectl delete pvc -n bank --all   # removes Postgres data
+
+# Удалить данные Postgres (PersistentVolumeClaim)
+kubectl delete pvc -n bank --all
+
+# Остановить Minikube (опционально)
+minikube stop
 ```
 
 ---
