@@ -21,6 +21,10 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: ACCOUNTS_SERVICE_URL
+              value: "http://accounts-service:8081"
+            - name: NOTIFICATIONS_SERVICE_URL
+              value: "http://notifications-service:8082"
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
             - name: CASH_CLIENT_SECRET
@@ -32,6 +36,8 @@ spec:
               value: "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs"
             - name: KEYCLOAK_TOKEN_URI
               value: "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/token"
+            - name: SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI
+              value: "http://keycloak.bank.local/realms/bank-app-realm"
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

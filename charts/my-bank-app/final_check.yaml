@@ -205,7 +205,7 @@ spec:
               protocol: TCP
           env:
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://common-db:5432/bank_db"
+              value: "jdbc:postgresql://common-db:5432/users"
             - name: SERVER_PORT
               value: "8081"
             - name: SPRING_DATASOURCE_PASSWORD
@@ -451,7 +451,7 @@ spec:
           image: "postgres:16"
           env:
             - name: POSTGRES_DB
-              value: "bank_db"
+              value: "users"
             - name: POSTGRES_USER
               value: "postgres"
             - name: POSTGRES_PASSWORD

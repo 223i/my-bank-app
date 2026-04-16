@@ -10,5 +10,6 @@ service:
   port: 5432
 
 env:
-  database: "bank_db"
+  database: "users"
   user: "postgres"
+  password: "password"

@@ -10,7 +10,7 @@ service:
   port: 8081
 
 env:
-  spring_datasource_url: "jdbc:postgresql://common-db:5432/bank_db"
+  spring_datasource_url: "jdbc:postgresql://common-db:5432/users"
   server_port: "8081"
   keycloak_url: "http://keycloak:8080/realms/bank-app-realm"
 
