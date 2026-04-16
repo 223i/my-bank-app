@@ -10,4 +10,4 @@ service:
 
 env:
   server_port: "8082"
-  spring_datasource_url: "jdbc:postgresql://common-db:5432/users"
+  spring_datasource_url: "jdbc:postgresql://common-db:5432/bank_db"

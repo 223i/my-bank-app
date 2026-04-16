@@ -20,10 +20,13 @@ spec:
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
-              value: "admin"
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: db-password
+            - name: KC_HOSTNAME
+              value: "keycloak.bank.local"
             - name: KC_HOSTNAME_STRICT
-              value: "false"
-            - name: KC_HOSTNAME_STRICT_HTTPS
               value: "false"
             - name: KC_HTTP_ENABLED
               value: "true"
@@ -36,12 +39,18 @@ spec:
             httpGet:
               path: /realms/master
               port: 8080
-            initialDelaySeconds: 90
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /realms/master
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
           volumeMounts:
             - name: realm-volume
               mountPath: /opt/keycloak/data/import/bank-app-realm.json

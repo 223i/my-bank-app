@@ -75,10 +75,6 @@
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-kubernetes-client-loadbalancer</artifactId>
-		</dependency>
 	</dependencies>
 
 	<build>
