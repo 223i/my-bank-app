@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-integration-test"
+  labels:
+    app: "{{ .Release.Name }}-integration-test"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-integration
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Running integration tests..."
+          
+          echo "1. Testing service connectivity..."
+          services="accounts-service:8081 gateway-service:8000 notifications-service:8082 cash-service:8084 transfer-service:8085 keycloak:8080 my-bank-front-app:8083"
+          
+          for service in $services; do
+            service_name=$(echo $service | cut -d: -f1)
+            service_port=$(echo $service | cut -d: -f2)
+            
+            echo "Testing connectivity to $service_name:$service_port..."
+            for i in $(seq 1 10); do
+              if nc -z $service_name $service_port; then
+                echo "✅ $service_name is reachable"
+                break
+              else
+                echo "⏳ Attempt $i: $service_name not reachable"
+                sleep 2
+              fi
+            done
+            
+            if ! nc -z $service_name $service_port; then
+              echo "❌ $service_name is not reachable after 10 attempts"
+              exit 1
+            fi
+          done
+          
+          echo "2. Testing Keycloak realm..."
+          if wget -q --spider http://keycloak:8080/realms/bank-app-realm/.well-known/openid_configuration; then
+            echo "✅ Keycloak OpenID configuration is accessible"
+          else
+            echo "❌ Keycloak OpenID configuration is not accessible"
+            exit 1
+          fi
+          
+          echo "3. Testing database connectivity from services..."
+          echo "Testing accounts-service database connection..."
+          if wget -q --spider http://accounts-service:8081/actuator/health; then
+            echo "✅ accounts-service health endpoint accessible"
+          else
+            echo "❌ accounts-service health endpoint not accessible"
+            exit 1
+          fi
+          
+          echo "Testing notifications-service database connection..."
+          if wget -q --spider http://notifications-service:8082/actuator/health; then
+            echo "✅ notifications-service health endpoint accessible"
+          else
+            echo "❌ notifications-service health endpoint not accessible"
+            exit 1
+          fi
+          
+          echo "🎉 All integration tests passed!"
+          exit 0

@@ -195,26 +195,28 @@ cd my-bank-front-app && ./mvnw spring-boot:run
   - Логин: `admin`
   - Пароль: `admin`
 
-## ☸️ Kubernetes / Helm (Minikube)
+## ☸️ Kubernetes / Helm 
 
 ### Требования
 
 - Docker
-- [Minikube](https://minikube.sigs.k8s.io/docs/start/) ≥ 1.32
 - `kubectl`
 - `helm` ≥ 3.8
 
 ---
-
 ### Шаг 1 — Запуск Minikube
 
 ```bash
-# Запускаем кластер с достаточным количеством ресурсов
-minikube start --cpus=4 --memory=6g --driver=docker
+# выбираем контекст docker-desktop
+kubectl config get-contexts
+kubectl config use-context docker-desktop
 
-# Включаем nginx-ingress контроллер
-minikube addons enable ingress
+#установить Ingress, если не установлен
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.5/deploy/static/provider/baremetal/deploy.yaml 
 
+#назначить ингрессу коректный тип
+kubectl patch svc ingress-nginx-controller -n ingress-nginx -p '{"spec": {"type": "LoadBalancer"}}'
+ 
 # Проверяем, что ingress-контроллер запустился
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
@@ -241,12 +243,6 @@ echo "127.0.0.1 bank.local keycloak.bank.local" | sudo tee -a /etc/hosts
 ---
 
 ### Шаг 3 — Сборка Docker-образов
-
-Направляем Docker в реестр Minikube, чтобы образы были доступны кластеру:
-
-```bash
-eval $(minikube docker-env)
-```
 
 Собираем все сервисы из корня репозитория:
 
@@ -291,8 +287,17 @@ kubectl logs -n bank -l app=accounts-service --tail=50
 # Убедиться, что Keycloak загрузил realm
 kubectl logs -n bank -l app=keycloak | grep "bank-app-realm"
 
-# Запустить Helm-тесты (проверка /actuator/health всех сервисов + OIDC Keycloak)
-helm test bank -n bank --logs
+# Установить чарт с тестами
+helm upgrade --install my-bank-app ./charts/my-bank-app \
+  --namespace default \
+  --values ./charts/my-bank-app/values.yaml \
+  --timeout 15m
+
+# Запустить Helm-тесты 
+helm test my-bank-app --namespace default
+
+# Запустить конкретный тест
+helm test my-bank-app --namespace default --filter test-database
 ```
 
 ---
@@ -328,8 +333,6 @@ helm uninstall bank -n bank
 # Удалить данные Postgres (PersistentVolumeClaim)
 kubectl delete pvc -n bank --all
 
-# Остановить Minikube (опционально)
-minikube stop
 ```
 
 ---

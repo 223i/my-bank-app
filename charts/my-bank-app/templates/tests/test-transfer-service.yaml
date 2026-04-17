@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-transfer-service-test"
+  labels:
+    app: "{{ .Release.Name }}-transfer-service-test"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-transfer-service
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Testing transfer-service health..."
+          # Wait for service to be ready
+          for i in $(seq 1 30); do
+            if wget -q --spider http://transfer-service:8085/actuator/health; then
+              echo "transfer-service is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i: transfer-service not ready, waiting..."
+            sleep 5
+          done
+          echo "transfer-service health check failed after 30 attempts"
+          exit 1

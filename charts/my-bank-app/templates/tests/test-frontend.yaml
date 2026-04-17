@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-frontend-test"
+  labels:
+    app: "{{ .Release.Name }}-frontend-test"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "7"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-frontend
+      image: busybox:1.36
+      command:
+        - sh
+        - -c
+        - |
+          echo "Testing frontend service health..."
+          # Wait for frontend to be ready
+          for i in $(seq 1 30); do
+            if wget -q --spider http://my-bank-front-app:8083; then
+              echo "Frontend is healthy!"
+              # Test OAuth2 redirect
+              if wget -q --spider http://my-bank-front-app:8083/oauth2/authorization/keycloak; then
+                echo "OAuth2 endpoint is available!"
+                exit 0
+              else
+                echo "Frontend is up but OAuth2 endpoint not available"
+                exit 1
+              fi
+            fi
+            echo "Attempt $i: Frontend not ready, waiting..."
+            sleep 5
+          done
+          echo "Frontend health check failed after 30 attempts"
+          exit 1

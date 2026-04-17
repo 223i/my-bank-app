@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-database-test"
+  labels:
+    app: "{{ .Release.Name }}-database-test"
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: test-database
+      image: postgres:16
+      command:
+        - sh
+        - -c
+        - |
+          echo "Testing database connection..."
+          # Wait for database to be ready
+          for i in $(seq 1 30); do
+            if pg_isready -h common-db -p 5432 -U postgres; then
+              echo "Database is ready!"
+              # Test database creation
+              if PGPASSWORD=password psql -h common-db -p 5432 -U postgres -d common-db -c "SELECT 1;"; then
+                echo "Database connection successful!"
+                exit 0
+              else
+                echo "Database exists but connection failed"
+                exit 1
+              fi
+            fi
+            echo "Attempt $i: Database not ready, waiting..."
+            sleep 5
+          done
+          echo "Database health check failed after 30 attempts"
+          exit 1
+      env:
+        - name: PGPASSWORD
+          value: "password"
