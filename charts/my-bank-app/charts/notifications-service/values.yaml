@@ -10,4 +10,7 @@ service:
 
 env:
   server_port: "8082"
-  spring_datasource_url: "jdbc:postgresql://common-db:5432/bank_db"
+  spring_datasource_url: "jdbc:postgresql://common-db:5432/common-db"
+  spring_datasource_username: "postgres"
+  spring_datasource_password: "password"
+#  spring_jpa_database_platform: "org.hibernate.dialect.PostgreSQLDialect"

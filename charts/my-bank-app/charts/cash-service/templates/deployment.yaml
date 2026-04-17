@@ -21,6 +21,10 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           env:
+            - name: ACCOUNTS_SERVICE_URL
+              value: "http://accounts-service:8081"
+            - name: NOTIFICATIONS_SERVICE_URL
+              value: "http://notifications-service:8082"
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
             - name: CASH_CLIENT_SECRET
