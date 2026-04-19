@@ -23,9 +23,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        // Balance endpoints вызываются service-to-service через client_credentials
-                        // Path на уровне accounts-service (после RewritePath в gateway): /{login}/decrease-balance
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/*/decrease-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .requestMatchers("/*/increase-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .anyRequest().authenticated()

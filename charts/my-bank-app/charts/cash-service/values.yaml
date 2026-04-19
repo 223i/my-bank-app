@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: my-bank-app-cash-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  port: 8084
+
+env:
+  server_port: "8084"

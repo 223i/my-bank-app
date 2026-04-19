@@ -78,11 +78,6 @@ services:
       timeout: 5s
       retries: 10
 
-  # --- Микросервисы ---
-  # Keycloak URLs (keycloak.jwk-set-uri, keycloak.token-uri) поставляются
-  # через Consul KV, а не через env vars — убирает дублирование конфига.
-  # Секреты (CLIENT_SECRET, KEYCLOAK_ADMIN_*) остаются в env vars — в KV не хранятся.
-
   gateway-service:
     build:
       context: .

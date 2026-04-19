@@ -1,0 +1,43 @@
+replicaCount: 1
+
+image:
+  repository: my-bank-app-accounts-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 8081
+
+env:
+  spring_datasource_url: "jdbc:postgresql://common-db:5432/common-db"
+  server_port: "8081"
+  keycloak_url: "http://keycloak:8080/realms/bank-app-realm"
+  spring_datasource_username: "postgres"
+  spring_datasource_password: "password"
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8081
+  initialDelaySeconds: 90
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8081
+  initialDelaySeconds: 75
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+resources:
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+  requests:
+    memory: "256Mi"
+    cpu: "100m"

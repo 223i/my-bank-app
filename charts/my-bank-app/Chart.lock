@@ -1,0 +1,27 @@
+dependencies:
+- name: accounts-service
+  repository: file://./charts/accounts-service
+  version: 0.1.0
+- name: cash-service
+  repository: file://./charts/cash-service
+  version: 0.1.0
+- name: transfer-service
+  repository: file://./charts/transfer-service
+  version: 0.1.0
+- name: notifications-service
+  repository: file://./charts/notifications-service
+  version: 0.1.0
+- name: common-db
+  repository: file://./charts/common-db
+  version: 0.1.0
+- name: keycloak
+  repository: file://./charts/keycloak
+  version: 0.1.0
+- name: gateway-service
+  repository: file://./charts/gateway-service
+  version: 0.1.0
+- name: my-bank-front-app
+  repository: file://./charts/my-bank-front-app
+  version: 0.1.0
+digest: sha256:a86841b489f6763417e552c852ab651c9cdd276f2c7eab469af44c70288e7407
+generated: "2026-04-11T22:08:33.379707+03:00"

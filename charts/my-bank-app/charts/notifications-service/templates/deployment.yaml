@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-service
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: notifications-service
+  template:
+    metadata:
+      labels:
+        app: notifications-service
+    spec:
+        initContainers:
+          - name: wait-for-db
+            image: busybox:1.36
+            command:
+              - sh
+              - -c
+              - "until nc -zvw 2 common-db 5432; do echo 'Waiting for database connection...'; sleep 2; done; echo 'DB is up!';"
+        containers:
+          - name: notifications-service
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            ports:
+              - name: http
+                containerPort: {{ .Values.service.port }}
+                protocol: TCP
+            env:
+              - name: SERVER_PORT
+                value: {{ .Values.env.server_port | quote }}
+              - name: SPRING_DATASOURCE_URL
+                value: {{ .Values.env.spring_datasource_url | quote }}
+              - name: SPRING_DATASOURCE_USERNAME
+                value: "postgres"
+              - name: SPRING_DATASOURCE_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: bank-secrets
+                    key: db-password
+              - name: SPRING_CLOUD_CONSUL_ENABLED
+                value: "false"
+              - name: KEYCLOAK_JWK_SET_URI
+                value: "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs"
+            {{- with .Values.livenessProbe }}
+            livenessProbe:
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- with .Values.readinessProbe }}
+            readinessProbe:
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
