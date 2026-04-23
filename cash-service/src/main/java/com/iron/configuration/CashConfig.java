@@ -17,9 +17,6 @@ public class CashConfig {
     @Value("${services.accounts-url:http://accounts-service:8081}")
     private String accountsServiceUrl;
 
-    @Value("${services.notifications-url:http://notifications-service:8082}")
-    private String notificationsServiceUrl;
-
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
             ClientRegistrationRepository clientRegistrationRepository,
@@ -40,16 +37,6 @@ public class CashConfig {
         interceptor.setClientRegistrationIdResolver(request -> "cash-service-client");
         return RestClient.builder()
                 .baseUrl(accountsServiceUrl)
-                .requestInterceptor(interceptor)
-                .build();
-    }
-
-    @Bean
-    public RestClient notificationsRestClient(OAuth2AuthorizedClientManager manager) {
-        var interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
-        interceptor.setClientRegistrationIdResolver(request -> "cash-service-client");
-        return RestClient.builder()
-                .baseUrl(notificationsServiceUrl)
                 .requestInterceptor(interceptor)
                 .build();
     }

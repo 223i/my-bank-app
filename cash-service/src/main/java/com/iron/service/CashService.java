@@ -18,34 +18,25 @@ import java.util.UUID;
 public class CashService {
 
     private final RestClient accountsRestClient;
-    private final RestClient notificationsRestClient;
+    private final NotificationProducer notificationProducer;
 
     public void processOperation(String login, BigDecimal amount, String type) {
         String uri = type.equalsIgnoreCase("PUT") ? "/increase-balance" : "/decrease-balance";
         String transactionId = UUID.randomUUID().toString();
 
         try {
-            // 1. Запрос в Accounts (идемпотентно благодаря transactionId)
             callAccountsService(login, amount, uri, transactionId);
 
-            // 2. Уведомление
-            String msg = type.equalsIgnoreCase("PUT") ? "Пополнение на " : "Снятие ";
-            callNotificationsService(login, amount, msg);
+            String message = type.equalsIgnoreCase("PUT")
+                    ? "Пополнение на " + amount + " руб. успешно выполнено"
+                    : "Снятие " + amount + " руб. успешно выполнено";
+
+            notificationProducer.send(new NotificationRequest(login, message, "CASH_OP"));
 
         } catch (Exception e) {
             log.error("Cash operation failed: {}", e.getMessage());
             throw new RuntimeException("Не удалось провести операцию: " + e.getMessage());
         }
-    }
-
-    @Retry(name = "notificationsService")
-    @CircuitBreaker(name = "notificationsService", fallbackMethod = "notificationsFallback")
-    private void callNotificationsService(String login, BigDecimal amount, String msg) {
-        notificationsRestClient.post()
-                .uri("/api/notifications/send")
-                .body(new NotificationRequest(login, msg + amount + " руб. успешно выполнено", "CASH_OP"))
-                .retrieve()
-                .toBodilessEntity();
     }
 
     @Retry(name = "accountsService")
@@ -65,10 +56,5 @@ public class CashService {
                                  String transactionId, Throwable ex) {
         log.error("Accounts service unavailable: transactionId={}", transactionId, ex);
         throw new RuntimeException("Accounts service временно недоступен. Попробуйте повторить операцию позже");
-    }
-
-    public void notificationsFallback(Throwable ex) {
-        log.error("Notifications service unavailable: {}", ex.getMessage());
-        throw new RuntimeException("Notifications service временно недоступен. Попробуйте повторить операцию позже");
     }
 }

@@ -54,7 +54,6 @@ app:
 
 services:
   accounts-url: ${ACCOUNTS_SERVICE_URL:http://accounts-service:8081}
-  notifications-url: ${NOTIFICATIONS_SERVICE_URL:http://notifications-service:8082}
 
 server:
   port: ${SERVER_PORT:8084}
@@ -75,10 +74,6 @@ resilience4j:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
-      notificationsService:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 5s
   retry:
     instances:
       accountsService:
@@ -90,6 +85,3 @@ resilience4j:
           - org.springframework.web.client.HttpServerErrorException
         ignoreExceptions:
           - org.springframework.web.client.HttpClientErrorException
-      notificationsService:
-        maxAttempts: 3
-        waitDuration: 500ms

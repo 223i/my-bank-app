@@ -27,16 +27,14 @@ class CashServiceTest {
     @Mock
     private RestClient accountsRestClient;
 
-    // RETURNS_DEEP_STUBS: автоматически обрабатывает цепочку post().uri().body().retrieve().toBodilessEntity()
-    // без явного стаббинга каждого звена; Mockito не включает deep stubs в strict-mode проверки.
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-    private RestClient notificationsRestClient;
+    @Mock
+    private NotificationProducer notificationProducer;
 
     private CashService cashService;
 
     @BeforeEach
     void setUp() {
-        cashService = new CashService(accountsRestClient, notificationsRestClient);
+        cashService = new CashService(accountsRestClient, notificationProducer);
     }
 
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {
@@ -130,6 +128,6 @@ class CashServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("accounts-service unavailable");
 
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 }
