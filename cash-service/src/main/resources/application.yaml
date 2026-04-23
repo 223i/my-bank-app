@@ -1,6 +1,15 @@
 spring:
   application:
     name: cash-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      retries: 10
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
   cloud:
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
@@ -37,6 +46,11 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+
+app:
+  kafka:
+    topics:
+      notifications: ${KAFKA_NOTIFICATIONS_TOPIC:notifications.events}
 
 services:
   accounts-url: ${ACCOUNTS_SERVICE_URL:http://accounts-service:8081}

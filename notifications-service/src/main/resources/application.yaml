@@ -1,6 +1,18 @@
 spring:
   application:
     name: notifications-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_NOTIFICATIONS_GROUP:notifications-service}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.iron.*"
+    listener:
+      ack-mode: record
   cloud:
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
@@ -33,6 +45,11 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
+
+app:
+  kafka:
+    topics:
+      notifications: ${KAFKA_NOTIFICATIONS_TOPIC:notifications.events}
 
 server:
   port: ${SERVER_PORT:8082}
