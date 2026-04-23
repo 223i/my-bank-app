@@ -47,14 +47,6 @@ spring:
         jwt:
           # keycloak.jwk-set-uri поставляется Consul Config (config/application/)
           jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
-      client:
-        registration:
-          accounts-service-client:
-            provider: keycloak
-            client-id: accounts-service-client
-            client-secret: ${CLIENT_SECRET}
-            authorization-grant-type: client_credentials
-            scope: openid, profile
         provider:
           keycloak:
             token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
@@ -63,9 +55,6 @@ app:
   kafka:
     topics:
       notifications: ${KAFKA_NOTIFICATIONS_TOPIC:notifications.events}
-
-services:
-  notifications-url: ${NOTIFICATIONS_SERVICE_URL:http://notifications-service:8082}
 
 server:
   port: ${SERVER_PORT:8081}
@@ -78,17 +67,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      notificationsService:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 5s
-  retry:
-    instances:
-      notificationsService:
-        maxAttempts: 3
-        waitDuration: 500ms
