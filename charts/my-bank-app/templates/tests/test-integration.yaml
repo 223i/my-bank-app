@@ -6,7 +6,7 @@ metadata:
     app: "{{ .Release.Name }}-integration-test"
   annotations:
     "helm.sh/hook": test
-    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-weight": "11"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   restartPolicy: Never
@@ -20,7 +20,7 @@ spec:
           echo "Running integration tests..."
           
           echo "1. Testing service connectivity..."
-          services="accounts-service:8081 gateway-service:8000 notifications-service:8082 cash-service:8084 transfer-service:8085 keycloak:8080 my-bank-front-app:8083"
+          services="accounts-service:8081 gateway-service:8000 notifications-service:8082 cash-service:8084 transfer-service:8085 keycloak:8080 my-bank-front-app:8083 my-bank-app-kafka:9092"
           
           for service in $services; do
             service_name=$(echo $service | cut -d: -f1)
@@ -51,7 +51,15 @@ spec:
             exit 1
           fi
           
-          echo "3. Testing database connectivity from services..."
+          echo "3. Testing Kafka broker TCP connectivity..."
+          if nc -z my-bank-app-kafka 9092; then
+            echo "✅ Kafka broker is reachable"
+          else
+            echo "❌ Kafka broker is not reachable"
+            exit 1
+          fi
+
+          echo "4. Testing database connectivity from services..."
           echo "Testing accounts-service database connection..."
           if wget -q --spider http://accounts-service:8081/actuator/health; then
             echo "✅ accounts-service health endpoint accessible"
