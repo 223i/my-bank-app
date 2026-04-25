@@ -25,11 +25,13 @@ class NotificationServiceTest {
 
     @Test
     void shouldSaveNotificationEntityFromRequest() {
-        NotificationRequest request = new NotificationRequest(
-                "user_login",
-                "Test message",
-                "TRANSFER"
-        );
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user_login")
+                .message("Test message")
+                .type("TRANSFER")
+                .sourceService("test-service")
+                .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER"))
+                .build();
 
         notificationService.save(request);
 

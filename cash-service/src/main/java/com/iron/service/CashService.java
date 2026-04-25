@@ -31,7 +31,13 @@ public class CashService {
                     ? "Пополнение на " + amount + " руб. успешно выполнено"
                     : "Снятие " + amount + " руб. успешно выполнено";
 
-            notificationProducer.send(new NotificationRequest(login, message, "CASH_OP"));
+            notificationProducer.send(NotificationRequest.builder()
+                    .recipientLogin(login)
+                    .message(message)
+                    .type("CASH_OP")
+                    .sourceService("cash-service")
+                    .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER", "ROLE_ACCOUNTS_INTERNAL"))
+                    .build());
 
         } catch (Exception e) {
             log.error("Cash operation failed: {}", e.getMessage());

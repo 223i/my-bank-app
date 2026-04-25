@@ -34,9 +34,13 @@ public class TransferService {
         String transactionId = UUID.randomUUID().toString();
         try {
             changeBalance(fromLogin, toLogin, amount, transactionId);
-            notificationProducer.send(new NotificationRequest(
-                    toLogin, "Вам пришел перевод: " + amount, "TRANSFER"
-            ));
+            notificationProducer.send(NotificationRequest.builder()
+                    .recipientLogin(toLogin)
+                    .message("Вам пришел перевод: " + amount)
+                    .type("TRANSFER")
+                    .sourceService("transfer-service")
+                    .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER", "ROLE_ACCOUNTS_INTERNAL"))
+                    .build());
 
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());

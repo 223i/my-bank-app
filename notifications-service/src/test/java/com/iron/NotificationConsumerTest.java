@@ -27,7 +27,13 @@ class NotificationConsumerTest {
 
     @Test
     void shouldSaveAndAcknowledgeMessage() {
-        NotificationRequest request = new NotificationRequest("user", "msg", "TRANSFER");
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user")
+                .message("msg")
+                .type("TRANSFER")
+                .sourceService("test-service")
+                .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER"))
+                .build();
 
         notificationConsumer.consume(request, acknowledgment);
 
@@ -37,7 +43,13 @@ class NotificationConsumerTest {
 
     @Test
     void shouldNotAcknowledgeWhenSaveFails() {
-        NotificationRequest request = new NotificationRequest("user", "msg", "TRANSFER");
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user")
+                .message("msg")
+                .type("TRANSFER")
+                .sourceService("test-service")
+                .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER"))
+                .build();
         doThrow(new RuntimeException("DB error")).when(notificationService).save(request);
 
         assertThatThrownBy(() -> notificationConsumer.consume(request, acknowledgment))
