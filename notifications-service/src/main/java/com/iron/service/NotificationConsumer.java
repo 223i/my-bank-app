@@ -16,7 +16,7 @@ public class NotificationConsumer {
 
     @KafkaListener(
             topics = "${app.kafka.topics.notifications}",
-            groupId = "${spring.kafka.consumer.group-id}"
+            groupId = "${app.kafka.consumer.group-id}"
     )
     public void consume(NotificationRequest request, Acknowledgment acknowledgment) {
         try {

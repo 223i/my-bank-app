@@ -48,6 +48,8 @@ spring:
 
 app:
   kafka:
+    consumer:
+      group-id: ${KAFKA_NOTIFICATIONS_GROUP:notifications-service}
     topics:
       notifications: ${KAFKA_NOTIFICATIONS_TOPIC:notifications.events}
 
