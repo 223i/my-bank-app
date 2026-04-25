@@ -2,12 +2,20 @@ FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 
-COPY transfer-service/pom.xml .
-COPY pom.xml ..
-RUN mvn dependency:go-offline -B
+COPY pom.xml .
+COPY transfer-service/pom.xml ./transfer-service/
+COPY common-kafka/pom.xml ./common-kafka/
+COPY transfer-service/src ./transfer-service/src
+COPY common-kafka/src ./common-kafka/src
 
-COPY transfer-service/src ./src
-RUN mvn clean package -DskipTests -B
+WORKDIR /app
+RUN mvn install -N -B -Dmaven.repo.local=/app/.m2/repository
+
+WORKDIR /app/common-kafka
+RUN mvn clean install -DskipTests -B -Dmaven.repo.local=/app/.m2/repository
+
+WORKDIR /app/transfer-service
+RUN mvn clean package -DskipTests -B -Dmaven.repo.local=/app/.m2/repository
 
 # runtime
 FROM eclipse-temurin:21-jre-alpine
@@ -16,7 +24,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && \
     chown -R appuser:appgroup /app
 
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/transfer-service/target/*.jar app.jar
 
 RUN chown appuser:appgroup app.jar
 
