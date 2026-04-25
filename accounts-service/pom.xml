@@ -114,6 +114,11 @@
             <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.iron</groupId>
+            <artifactId>common-kafka</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

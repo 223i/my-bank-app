@@ -3,7 +3,7 @@ package com.iron.service;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.model.NotificationRequest;
+import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;

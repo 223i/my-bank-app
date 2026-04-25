@@ -3,7 +3,7 @@ package com.iron.service;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.model.NotificationRequest;
+import com.iron.dto.NotificationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
