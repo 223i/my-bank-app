@@ -18,8 +18,15 @@ public class NotificationProducer {
     private String notificationsTopic;
 
     public void send(NotificationRequest request) {
-        kafkaTemplate.send(notificationsTopic, request.getRecipientLogin(), request);
-        log.info("Notification event sent to Kafka: recipient={}, type={}",
-                request.getRecipientLogin(), request.getType());
+        kafkaTemplate.send(notificationsTopic, request.getRecipientLogin(), request)
+                .whenComplete((result, failure) -> {
+                    if (failure != null) {
+                        log.error("Failed to send notification event to Kafka: recipient={}, type={}, error={}",
+                                request.getRecipientLogin(), request.getType(), failure.getMessage(), failure);
+                    } else {
+                        log.info("Notification event successfully sent to Kafka: recipient={}, type={}, offset={}",
+                                request.getRecipientLogin(), request.getType(), result.getRecordMetadata().offset());
+                    }
+                });
     }
 }
