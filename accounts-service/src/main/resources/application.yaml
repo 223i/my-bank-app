@@ -1,6 +1,15 @@
 spring:
   application:
     name: accounts-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      retries: 10
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
   cloud:
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
@@ -38,20 +47,14 @@ spring:
         jwt:
           # keycloak.jwk-set-uri поставляется Consul Config (config/application/)
           jwk-set-uri: ${keycloak.jwk-set-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/certs}
-      client:
-        registration:
-          accounts-service-client:
-            provider: keycloak
-            client-id: accounts-service-client
-            client-secret: ${CLIENT_SECRET}
-            authorization-grant-type: client_credentials
-            scope: openid, profile
         provider:
           keycloak:
             token-uri: ${keycloak.token-uri:http://localhost:8080/realms/bank-app-realm/protocol/openid-connect/token}
 
-services:
-  notifications-url: ${NOTIFICATIONS_SERVICE_URL:http://notifications-service:8082}
+app:
+  kafka:
+    topics:
+      notifications: ${KAFKA_NOTIFICATIONS_TOPIC:notifications.events}
 
 server:
   port: ${SERVER_PORT:8081}
@@ -64,17 +67,3 @@ management:
   endpoint:
     health:
       show-details: always
-
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      notificationsService:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 5s
-  retry:
-    instances:
-      notificationsService:
-        maxAttempts: 3
-        waitDuration: 500ms

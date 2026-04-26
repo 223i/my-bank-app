@@ -3,7 +3,7 @@ package com.iron.service;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.model.NotificationRequest;
+import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
@@ -20,17 +20,28 @@ import java.util.UUID;
 public class TransferService {
 
     private final RestClient accountsRestClient;
-    private final RestClient notificationsRestClient;
+    private final NotificationProducer notificationProducer;
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
         log.info("Transfer from {} to {} for amount {}", fromLogin, toLogin, amount);
-        if (fromLogin.equals(toLogin)) { throw new SelfTransferException("Cannot transfer to the same account"); }
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) { throw new InvalidTransferAmountException("Amount must be positive"); }
+        if (fromLogin.equals(toLogin)) {
+            throw new SelfTransferException("Cannot transfer to the same account");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new InvalidTransferAmountException("Amount must be positive");
+        }
 
         String transactionId = UUID.randomUUID().toString();
         try {
             changeBalance(fromLogin, toLogin, amount, transactionId);
-            sendNotification(toLogin, amount);
+            notificationProducer.send(NotificationRequest.builder()
+                    .recipientLogin(toLogin)
+                    .message("Вам пришел перевод: " + amount)
+                    .type("TRANSFER")
+                    .sourceService("transfer-service")
+                    .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER", "ROLE_ACCOUNTS_INTERNAL"))
+                    .build());
+
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());
             throw new TransferException("Не удалось выполнить перевод: " + e.getMessage());
@@ -59,23 +70,5 @@ public class TransferService {
                                  String transactionId, Throwable ex) {
         log.error("Accounts service unavailable after retries, transactionId={}", transactionId, ex);
         throw new TransferException("Accounts service временно недоступен");
-    }
-
-    @Retry(name = "notificationsService")
-    @CircuitBreaker(name = "notificationsService", fallbackMethod = "notificationsFallback")
-    public void sendNotification(String toLogin, BigDecimal amount) {
-
-        notificationsRestClient.post()
-                .uri("/api/notifications/send")
-                .body(new NotificationRequest(
-                        toLogin,
-                        "Вам пришел перевод: " + amount,
-                        "TRANSFER"))
-                .retrieve()
-                .toBodilessEntity();
-    }
-
-    public void notificationsFallback(Throwable ex) {
-        log.error("Notification failed, but transfer completed", ex);
     }
 }

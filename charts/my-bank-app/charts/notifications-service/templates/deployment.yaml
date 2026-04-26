@@ -43,6 +43,12 @@ spec:
                 value: "false"
               - name: KEYCLOAK_JWK_SET_URI
                 value: "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs"
+              - name: KAFKA_BOOTSTRAP_SERVERS
+                value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
+              - name: KAFKA_NOTIFICATIONS_TOPIC
+                value: {{ .Values.global.kafkaConfig.notificationsTopic | quote }}
+              - name: KAFKA_NOTIFICATIONS_GROUP
+                value: {{ .Values.global.kafkaConfig.notificationsGroup | quote }}
             {{- with .Values.livenessProbe }}
             livenessProbe:
               {{- toYaml . | nindent 12 }}

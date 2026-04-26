@@ -10,14 +10,11 @@ import com.iron.model.Account;
 import com.iron.model.ProcessedTransaction;
 import com.iron.repository.AccountRepository;
 import com.iron.repository.ProcessedTransactionRepository;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,7 +31,7 @@ public class AccountService {
 
     private final AccountMapper mapper;
     private final AccountRepository accountRepository;
-    private final RestClient notificationsRestClient;
+    private final NotificationProducer notificationProducer;
     private final ProcessedTransactionRepository processedTransactionRepository;
 
     public AccountDto getAccount(String login) {
@@ -124,27 +121,10 @@ public class AccountService {
                 .type(type)
                 .build();
         try {
-            sendNotification(login, type, request);
+            notificationProducer.send(request);
         } catch (Exception e) {
-            // Не прерываем основную операцию из-за ошибки уведомления
             log.error("Failed to send notification to {}: {}", login, e.getMessage());
         }
-    }
-
-    @Retry(name = "notificationsService")
-    @CircuitBreaker(name = "notificationsService", fallbackMethod = "notificationsFallback")
-    private void sendNotification(String login, String type, NotificationRequest request) {
-        notificationsRestClient.post()
-                .uri("/api/notifications/send")
-                .body(request)
-                .retrieve()
-                .toBodilessEntity();
-        log.info("Notification sent to {} about {}", login, type);
-    }
-
-    public void notificationsFallback(Throwable ex) {
-        log.error("Notifications service unavailable: {}", ex.getMessage());
-        throw new RuntimeException("Notifications service временно недоступен. Попробуйте повторить операцию позже");
     }
 
     private void validateAge(LocalDate birthday) {

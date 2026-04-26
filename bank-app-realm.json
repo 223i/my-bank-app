@@ -1848,6 +1848,17 @@
           }
         }
       ]
+    },
+    {
+      "id": "kafka-produce-scope",
+      "name": "kafka:produce",
+      "description": "Permission to send messages to Kafka",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "false"
+      },
+      "protocolMappers": []
     }
   ],
   "defaultDefaultClientScopes": [

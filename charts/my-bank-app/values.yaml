@@ -159,3 +159,29 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+global:
+  security:
+    allowInsecureImages: true
+  kafkaConfig:
+    bootstrapServers: "my-bank-app-kafka:9092"
+    notificationsTopic: "notifications.events"
+    notificationsGroup: "notifications-service"
+
+kafka:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/kafka
+    tag: 4.0.0-debian-12-r10
+  persistence:
+    enabled: true
+    size: 8Gi
+  listeners:
+    client:
+      protocol: PLAINTEXT
+    controller:
+      protocol: PLAINTEXT
+    interbroker:
+      protocol: PLAINTEXT
+  sasl:
+    enabled: false

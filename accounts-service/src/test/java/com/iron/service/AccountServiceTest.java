@@ -45,6 +45,9 @@ class AccountServiceTest {
     @InjectMocks
     private AccountService accountService;
 
+    @Mock
+    private NotificationProducer notificationProducer;
+
     private Account testAccount;
     private AccountDto testAccountDto;
     private AccountUpdateDto testUpdateDto;
@@ -121,6 +124,7 @@ class AccountServiceTest {
         AccountDto result = accountService.updateAccount(login, testUpdateDto);
 
         assertThat(result).isNotNull();
+        verify(notificationProducer).send(any());
         verify(accountRepository).findByLogin(login);
         verify(mapper).updateEntity(testUpdateDto, testAccount);
         verify(accountRepository).save(testAccount);
@@ -200,6 +204,7 @@ class AccountServiceTest {
 
         assertThat(testAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(900.50));
         verify(accountRepository).save(testAccount);
+        verify(notificationProducer).send(any());
         verify(processedTransactionRepository).save(any(ProcessedTransaction.class));
     }
 
@@ -212,6 +217,7 @@ class AccountServiceTest {
         accountService.decreaseBalance("testuser", BigDecimal.valueOf(100), transactionId);
 
         verifyNoInteractions(accountRepository);
+        verifyNoInteractions(notificationProducer);
         verify(processedTransactionRepository, never()).save(any());
     }
 
@@ -229,6 +235,7 @@ class AccountServiceTest {
 
         verify(accountRepository, never()).save(any());
         verify(processedTransactionRepository, never()).save(any());
+        verifyNoInteractions(notificationProducer);
     }
 
     @Test
@@ -243,6 +250,7 @@ class AccountServiceTest {
                 .isInstanceOf(AccountNotFoundException.class);
 
         verify(processedTransactionRepository, never()).save(any());
+        verifyNoInteractions(notificationProducer);
     }
 
     // ─── increaseBalance ──────────────────────────────────────────────────────
@@ -259,6 +267,7 @@ class AccountServiceTest {
 
         assertThat(testAccount.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1500.50));
         verify(accountRepository).save(testAccount);
+        verify(notificationProducer).send(any());
         verify(processedTransactionRepository).save(any(ProcessedTransaction.class));
     }
 
@@ -271,6 +280,7 @@ class AccountServiceTest {
         accountService.increaseBalance("testuser", BigDecimal.valueOf(500), transactionId);
 
         verifyNoInteractions(accountRepository);
+        verifyNoInteractions(notificationProducer);
         verify(processedTransactionRepository, never()).save(any());
     }
 
@@ -291,7 +301,9 @@ class AccountServiceTest {
     @Test
     @DisplayName("Should handle notification service failure gracefully")
     void sendNotification_Failure() {
+        doThrow(new RuntimeException("Kafka unavailable"))
+                .when(notificationProducer).send(any());
+
         accountService.sendNotification("testuser", "Test notification", "TEST");
-        // Не выбрасывает исключение — уведомление не прерывает основной поток
     }
 }

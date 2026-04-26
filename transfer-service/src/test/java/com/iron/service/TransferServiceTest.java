@@ -3,6 +3,7 @@ package com.iron.service;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
+import com.iron.dto.NotificationRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,23 +32,25 @@ class TransferServiceTest {
     private RestClient accountsRestClient;
 
     @Mock
-    private RestClient notificationsRestClient;
+    private NotificationProducer notificationProducer;
 
     private TransferService transferService;
 
     @BeforeEach
     void setUp() {
-        transferService = new TransferService(accountsRestClient, notificationsRestClient);
+        transferService = new TransferService(accountsRestClient, notificationProducer);
     }
 
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {
         RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
         RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
         RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+
         when(accountsRestClient.patch()).thenReturn(uriSpec);
         when(uriSpec.uri(anyString(), any(), any(), any())).thenReturn(bodySpec);
         when(bodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.toBodilessEntity()).thenReturn(ResponseEntity.ok().build());
+
         return uriSpec;
     }
 
@@ -55,10 +58,8 @@ class TransferServiceTest {
     @DisplayName("Should call decrease then increase with -debit / -credit transactionId suffixes")
     void makeTransfer_passesTransactionIdWithCorrectSuffixes() {
         RestClient.RequestBodyUriSpec uriSpec = mockAccountsChainSuccess();
-        TransferService spy = spy(transferService);
-        doNothing().when(spy).sendNotification(anyString(), any(BigDecimal.class));
 
-        spy.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100));
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100));
 
         ArgumentCaptor<String> uriCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Object> arg3Captor = ArgumentCaptor.forClass(Object.class);
@@ -71,6 +72,7 @@ class TransferServiceTest {
         assertThat(uris.get(1)).contains("increase-balance");
         assertThat(txIds.get(0).toString()).endsWith("-debit");
         assertThat(txIds.get(1).toString()).endsWith("-credit");
+        verify(notificationProducer, times(1)).send(any(NotificationRequest.class));
     }
 
     @Test
@@ -78,11 +80,8 @@ class TransferServiceTest {
     void makeTransfer_generatesUniqueTransactionIdPerCall() {
         RestClient.RequestBodyUriSpec uriSpec = mockAccountsChainSuccess();
 
-        TransferService spy = spy(transferService);
-        doNothing().when(spy).sendNotification(anyString(), any(BigDecimal.class));
-
-        spy.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
-        spy.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(50));
 
         ArgumentCaptor<Object> arg3Captor = ArgumentCaptor.forClass(Object.class);
         verify(uriSpec, times(4)).uri(anyString(), any(), any(), arg3Captor.capture());
@@ -91,7 +90,27 @@ class TransferServiceTest {
         String firstBase = txIds.get(0).toString().replace("-debit", "");
         String secondBase = txIds.get(2).toString().replace("-debit", "");
         assertThat(firstBase).isNotEqualTo(secondBase);
+        verify(notificationProducer, times(2)).send(any(NotificationRequest.class));
     }
+
+    @Test
+    @DisplayName("Should send notification to recipient after successful transfer")
+    void makeTransfer_sendsKafkaNotification() {
+        mockAccountsChainSuccess();
+
+        transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100));
+
+        ArgumentCaptor<NotificationRequest> notificationCaptor =
+                ArgumentCaptor.forClass(NotificationRequest.class);
+
+        verify(notificationProducer).send(notificationCaptor.capture());
+
+        NotificationRequest notification = notificationCaptor.getValue();
+        assertThat(notification.getRecipientLogin()).isEqualTo("alice_99");
+        assertThat(notification.getType()).isEqualTo("TRANSFER");
+        assertThat(notification.getMessage()).contains("100");
+    }
+
 
     @Test
     @DisplayName("Should throw TransferException when accounts service fails (no rollback)")
@@ -110,9 +129,8 @@ class TransferServiceTest {
                 .isInstanceOf(TransferException.class)
                 .hasMessageContaining("accounts-service unavailable");
 
-        // Только debit вызов — rollback отсутствует (идемпотентный retry заменяет его)
         verify(accountsRestClient, times(1)).patch();
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 
     @Test
@@ -125,7 +143,7 @@ class TransferServiceTest {
                 .hasMessageContaining("Connection refused");
 
         verify(accountsRestClient, times(1)).patch();
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 
     @Test
@@ -138,7 +156,7 @@ class TransferServiceTest {
                 .isEqualTo("TRANSFER_ERROR");
 
         verifyNoInteractions(accountsRestClient);
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 
     @Test
@@ -151,7 +169,7 @@ class TransferServiceTest {
                 .isEqualTo("TRANSFER_ERROR");
 
         verifyNoInteractions(accountsRestClient);
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 
     @Test
@@ -164,7 +182,7 @@ class TransferServiceTest {
                 .isEqualTo("TRANSFER_ERROR");
 
         verifyNoInteractions(accountsRestClient);
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 
     @Test
@@ -177,6 +195,6 @@ class TransferServiceTest {
                 .isEqualTo("TRANSFER_ERROR");
 
         verifyNoInteractions(accountsRestClient);
-        verifyNoInteractions(notificationsRestClient);
+        verifyNoInteractions(notificationProducer);
     }
 }

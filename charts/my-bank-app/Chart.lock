@@ -23,5 +23,8 @@ dependencies:
 - name: my-bank-front-app
   repository: file://./charts/my-bank-front-app
   version: 0.1.0
-digest: sha256:a86841b489f6763417e552c852ab651c9cdd276f2c7eab469af44c70288e7407
-generated: "2026-04-11T22:08:33.379707+03:00"
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 32.4.3
+digest: sha256:6f8ab9679d6fdd43ed81eab1c4d6e3e81d4a72c4236ff097720f09a8b3665120
+generated: "2026-04-24T18:27:06.778245+03:00"
