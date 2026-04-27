@@ -1,12 +1,13 @@
 package com.iron.service;
 
+import com.iron.dto.NotificationRequest;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -16,11 +17,24 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TransferService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
+
+    // Business metrics
+    private final Counter failedTransferCounter;
+
+    public TransferService(RestClient accountsRestClient,
+                           NotificationProducer notificationProducer,
+                           MeterRegistry meterRegistry) {
+        this.accountsRestClient = accountsRestClient;
+        this.notificationProducer = notificationProducer;
+        this.failedTransferCounter = Counter.builder("failed_transfers_total")
+                .description("Total number of failed transfers")
+                .tag("service", "transfer-service")
+                .register(meterRegistry);
+    }
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
         log.info("Transfer from {} to {} for amount {}", fromLogin, toLogin, amount);
@@ -44,6 +58,7 @@ public class TransferService {
 
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());
+            failedTransferCounter.increment();
             throw new TransferException("Не удалось выполнить перевод: " + e.getMessage());
         }
     }

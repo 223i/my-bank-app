@@ -3,7 +3,8 @@ package com.iron.service;
 import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -13,12 +14,25 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class CashService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
+
+    // Business metrics
+    private final Counter failedCashOperationsCounter;
+
+    public CashService(RestClient accountsRestClient,
+                       NotificationProducer notificationProducer,
+                       MeterRegistry meterRegistry) {
+        this.accountsRestClient = accountsRestClient;
+        this.notificationProducer = notificationProducer;
+        this.failedCashOperationsCounter = Counter.builder("failed_cash_operations_total")
+                .description("Total number of failed cash operations")
+                .tag("service", "cash-service")
+                .register(meterRegistry);
+    }
 
     public void processOperation(String login, BigDecimal amount, String type) {
         String uri = type.equalsIgnoreCase("PUT") ? "/increase-balance" : "/decrease-balance";
@@ -41,6 +55,7 @@ public class CashService {
 
         } catch (Exception e) {
             log.error("Cash operation failed: {}", e.getMessage());
+            failedCashOperationsCounter.increment();
             throw new RuntimeException("Не удалось провести операцию: " + e.getMessage());
         }
     }
