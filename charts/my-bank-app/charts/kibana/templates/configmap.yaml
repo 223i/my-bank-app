@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kibana.fullname" . }}
+  labels:
+    {{- include "kibana.labels" . | nindent 4 }}
+data:
+  kibana.yml: |
+    server.host: {{ .Values.kibana.server.host }}
+    server.port: {{ .Values.kibana.server.port }}
+    elasticsearch.hosts: {{ .Values.kibana.elasticsearch.hosts | toPrettyJson }}
+    xpack.security.enabled: {{ .Values.kibana.security.enabled }}
+    
+    # Logging configuration
+    logging.appenders.console:
+      type: console
+      layout:
+        type: json
+    logging.root:
+      level: info
+      appenders: [default]
+      logger: ["console"]
+    
+    # Index patterns configuration
+    # These will be created automatically or can be created via Kibana UI

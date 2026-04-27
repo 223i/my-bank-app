@@ -1,0 +1,17 @@
+{{- if .Values.kibana.storage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "kibana.fullname" . }}
+  labels:
+    {{- include "kibana.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.kibana.storage.size }}
+  {{- if .Values.kibana.storage.class }}
+  storageClassName: {{ .Values.kibana.storage.class }}
+  {{- end }}
+{{- end }}
