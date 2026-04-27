@@ -36,3 +36,6 @@ dependencies:
   - name: kafka
     version: 32.4.3
     repository: "https://charts.bitnami.com/bitnami"
+  - name: zipkin
+    version: 0.1.0
+    repository: "file://./charts/zipkin"

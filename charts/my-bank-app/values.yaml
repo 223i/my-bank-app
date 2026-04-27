@@ -167,6 +167,8 @@ global:
     bootstrapServers: "my-bank-app-kafka:9092"
     notificationsTopic: "notifications.events"
     notificationsGroup: "notifications-service"
+  zipkinConfig:
+    endpoint: "http://my-bank-app-zipkin:9411/api/v2/spans"
 
 kafka:
   image:
