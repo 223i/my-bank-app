@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProfile name="!local">
+        <!-- Production profile - send logs to Logstash -->
+        <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+            <destination>${LOGSTASH_HOST:localhost}:${LOGSTASH_PORT:5044}</destination>
+            
+            <!-- JSON encoder with structured logging -->
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp/>
+                    <logLevel/>
+                    <loggerName/>
+                    <message/>
+                    <mdc/>
+                    <arguments/>
+                    <stackTrace/>
+                    <pattern>
+                        <pattern>
+                            {
+                                "service": "${spring.application.name:-transfer-service}",
+                                "environment": "${ENVIRONMENT:-production}",
+                                "traceId": "%X{traceId:-}",
+                                "spanId": "%X{spanId:-}"
+                            }
+                        </pattern>
+                    </pattern>
+                </providers>
+            </encoder>
+            
+            <!-- Connection settings -->
+            <connectionStrategy>
+                <roundRobin>
+                    <connectionTTL>5 minutes</connectionTTL>
+                </roundRobin>
+            </connectionStrategy>
+        </appender>
+        
+        <!-- Console appender for local debugging -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${spring.application.name:-transfer-service},%X{traceId:-},%X{spanId:-}] [%thread] %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+        
+        <!-- Root logger configuration -->
+        <root level="INFO">
+            <appender-ref ref="LOGSTASH"/>
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        
+        <!-- Application-specific loggers -->
+        <logger name="com.iron" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+        <logger name="org.springframework.kafka" level="INFO"/>
+        <logger name="org.springframework.security" level="INFO"/>
+        
+    </springProfile>
+    
+    <springProfile name="local">
+        <!-- Local development profile - only console logging -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [${spring.application.name:-transfer-service},%X{traceId:-},%X{spanId:-}] [%thread] %logger{36} - %msg%n</pattern>
+            </encoder>
+        </appender>
+        
+        <!-- Root logger configuration -->
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        
+        <!-- Application-specific loggers -->
+        <logger name="com.iron" level="DEBUG"/>
+        <logger name="org.springframework.web" level="DEBUG"/>
+        <logger name="org.springframework.kafka" level="INFO"/>
+        <logger name="org.springframework.security" level="INFO"/>
+        
+    </springProfile>
+</configuration>

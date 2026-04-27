@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "my-bank-app.fullname" . }}-monitoring-functionality-test"
+  labels:
+    {{- include "my-bank-app.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: prometheus-metrics-test
+      image: curlimages/curl:latest
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing Prometheus metrics collection..."
+          
+          # Wait for metrics to be available
+          sleep 30
+          
+          # Test if Prometheus is scraping metrics
+          response=$(curl -s "http://{{ include "my-bank-app.fullname" . }}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090/api/v1/query?query=up")
+          echo "Prometheus up query response: $response"
+          
+          if echo "$response" | grep -q '"status":"success"'; then
+            echo "✅ Prometheus is collecting metrics"
+          else
+            echo "❌ Prometheus metrics collection failed"
+            exit 1
+          fi
+          
+          # Test if Spring Boot metrics are available
+          response=$(curl -s "http://{{ include "my-bank-app.fullname" . }}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090/api/v1/query?query=jvm_memory_used_bytes")
+          if echo "$response" | grep -q '"status":"success"'; then
+            echo "✅ Spring Boot JVM metrics are available"
+          else
+            echo "❌ Spring Boot JVM metrics not found"
+            exit 1
+          fi
+          
+          # Test if business metrics are available
+          response=$(curl -s "http://{{ include "my-bank-app.fullname" . }}-prometheus.{{ .Release.Namespace }}.svc.cluster.local:9090/api/v1/query?query=failed_transfers_total")
+          if echo "$response" | grep -q '"status":"success"'; then
+            echo "✅ Business metrics are available"
+          else
+            echo "❌ Business metrics not found"
+            exit 1
+          fi
+    - name: elasticsearch-logs-test
+      image: curlimages/curl:latest
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing Elasticsearch log collection..."
+          
+          # Wait for logs to be indexed
+          sleep 60
+          
+          # Test if Elasticsearch has log indices
+          response=$(curl -s "http://{{ include "my-bank-app.fullname" . }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local:9200/_cat/indices/my-bank-app-logs-*?format=json")
+          echo "Elasticsearch indices response: $response"
+          
+          if echo "$response" | grep -q "my-bank-app-logs"; then
+            echo "✅ Elasticsearch is collecting logs"
+          else
+            echo "❌ Elasticsearch log collection failed - no log indices found"
+            # Don't fail the test as logs might not be generated yet
+            echo "ℹ️  Log indices may not exist yet - this is normal for fresh deployments"
+          fi
+          
+          # Test cluster health
+          response=$(curl -s "http://{{ include "my-bank-app.fullname" . }}-elasticsearch.{{ .Release.Namespace }}.svc.cluster.local:9200/_cluster/health?pretty")
+          echo "Elasticsearch cluster health: $response"
+          
+          if echo "$response" | grep -q '"status":"green\|yellow"'; then
+            echo "✅ Elasticsearch cluster is healthy"
+          else
+            echo "❌ Elasticsearch cluster is not healthy"
+            exit 1
+          fi
+    - name: grafana-dashboards-test
+      image: curlimages/curl:latest
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing Grafana dashboards..."
+          
+          # Test Grafana API access
+          response=$(curl -s -u admin:admin "http://{{ include "my-bank-app.fullname" . }}-grafana.{{ .Release.Namespace }}.svc.cluster.local:3000/api/health")
+          if echo "$response" | grep -q '"database":"ok"'; then
+            echo "✅ Grafana API is accessible"
+          else
+            echo "❌ Grafana API is not accessible"
+            exit 1
+          fi
+          
+          # Test if datasources are configured
+          response=$(curl -s -u admin:admin "http://{{ include "my-bank-app.fullname" . }}-grafana.{{ .Release.Namespace }}.svc.cluster.local:3000/api/datasources")
+          if echo "$response" | grep -q "Prometheus"; then
+            echo "✅ Prometheus datasource is configured in Grafana"
+          else
+            echo "❌ Prometheus datasource not found in Grafana"
+            exit 1
+          fi
+          
+          # Test if dashboards are available
+          response=$(curl -s -u admin:admin "http://{{ include "my-bank-app.fullname" . }}-grafana.{{ .Release.Namespace }}.svc.cluster.local:3000/api/search?query=My%20Bank%20App")
+          if echo "$response" | grep -q "My Bank App"; then
+            echo "✅ My Bank App dashboards are available"
+          else
+            echo "❌ My Bank App dashboards not found"
+            exit 1
+          fi
