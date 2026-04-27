@@ -173,6 +173,10 @@ global:
     endpoint: "http://my-bank-app-prometheus:9090"
   grafanaConfig:
     endpoint: "http://my-bank-app-grafana:3000"
+  elkConfig:
+    elasticsearchEndpoint: "http://my-bank-app-elasticsearch:9200"
+    logstashEndpoint: "my-bank-app-logstash:5044"
+    kibanaEndpoint: "http://my-bank-app-kibana:5601"
 
 kafka:
   image:
