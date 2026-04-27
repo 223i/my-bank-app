@@ -1,0 +1,68 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: notifications-service
+  
+  # Zipkin configuration
+  zipkin:
+    base-url: ${ZIPKIN_BASE_URL:http://localhost:9411}
+    
+  # Tracing configuration
+  sleuth:
+    sampler:
+      probability: 1.0  # Sample all requests for development
+      
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_NOTIFICATIONS_GROUP:notifications-service}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.iron.dto"
+        
+  # Database configuration
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:}:${DB_PORT:}/${DB_NAME:}
+    username: ${DB_USER:}
+    password: ${DB_PASSWORD:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# Management endpoints for Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+      sla:
+        http.server.requests: 100ms,200ms,500ms,1s
+
+# Logging configuration
+logging:
+  level:
+    com.iron: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.kafka: INFO
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

@@ -171,6 +171,8 @@ global:
     endpoint: "http://my-bank-app-zipkin:9411/api/v2/spans"
   prometheusConfig:
     endpoint: "http://my-bank-app-prometheus:9090"
+  grafanaConfig:
+    endpoint: "http://my-bank-app-grafana:3000"
 
 kafka:
   image:

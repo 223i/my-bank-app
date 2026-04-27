@@ -1,0 +1,57 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: cash-service
+  
+  # Zipkin configuration
+  zipkin:
+    base-url: ${ZIPKIN_BASE_URL:http://localhost:9411}
+    
+  # Tracing configuration
+  sleuth:
+    sampler:
+      probability: 1.0  # Sample all requests for development
+      
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      
+# Management endpoints for Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+      sla:
+        http.server.requests: 100ms,200ms,500ms,1s
+
+# Logging configuration
+logging:
+  level:
+    com.iron: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.kafka: INFO
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+
+# Service configuration
+services:
+  accounts:
+    url: ${ACCOUNTS_SERVICE_URL:http://localhost:8081}
