@@ -169,6 +169,8 @@ global:
     notificationsGroup: "notifications-service"
   zipkinConfig:
     endpoint: "http://my-bank-app-zipkin:9411/api/v2/spans"
+  prometheusConfig:
+    endpoint: "http://my-bank-app-prometheus:9090"
 
 kafka:
   image:
