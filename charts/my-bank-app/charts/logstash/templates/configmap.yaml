@@ -7,84 +7,44 @@ metadata:
 data:
   logstash.conf: |
     input {
-      beats {
+      tcp {
         port => {{ .Values.logstash.input.beats.port }}
+        codec => json_lines
       }
     }
-    
+
     filter {
-      # Parse JSON logs if they are in JSON format
-      if [message] =~ /^\{.*\}$/ {
-        json {
-          source => "message"
-        }
-      }
-      
-      # Parse structured log format with trace information
-      grok {
-        match => { 
-          "message" => "%{TIMESTAMP_ISO8601:timestamp} +%{LOGLEVEL:level} \[%{DATA:service},%{DATA:traceId},%{DATA:spanId}\] %{GREEDYDATA:log_message}"
-        }
-        tag_on_failure => ["_grokparsefailure"]
-      }
-      
-      # Add timestamp if not present
       if ![timestamp] {
         mutate {
           add_field => { "timestamp" => "%{@timestamp}" }
         }
       }
-      
-      # Parse timestamp
+
       date {
         match => [ "timestamp", "ISO8601" ]
         target => "@timestamp"
       }
-      
-      # Extract service name from various sources
+
       if [service] {
         mutate {
           add_field => { "application" => "%{service}" }
         }
-      } else if [fields][service] {
-        mutate {
-          add_field => { "application" => "%{[fields][service]}" }
-        }
       }
-      
-      # Clean up sensitive data (simplified masking)
-      if [log_message] {
+
+      if [message] {
         mutate {
           gsub => [
-            "log_message", "\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b", "XXXX-XXXX-XXXX-XXXX", # Credit card numbers
-            "log_message", "\b\d{16}\b", "XXXXXXXXXXXXXXXX", # 16-digit numbers
-            "log_message", "(?i)password[=:]\s*\S+", "password=*****", # Passwords
-            "log_message", "(?i)secret[=:]\s*\S+", "secret=*****" # Secrets
+            "message", "(?i)password[=:]\\s*\\S+", "password=*****",
+            "message", "(?i)secret[=:]\\s*\\S+", "secret=*****",
+            "message", "\\b\\d{16}\\b", "XXXXXXXXXXXXXXXX"
           ]
         }
       }
-      
-      # Rename log_message to message for consistency
-      if [log_message] {
-        mutate {
-          rename => { "log_message" => "message" }
-        }
-      }
-      
-      # Add environment information
-      mutate {
-        add_field => { "environment" => "production" }
-      }
     }
-    
+
     output {
       elasticsearch {
-        hosts => {{ .Values.logstash.output.elasticsearch.hosts | toPrettyJson }}
+        hosts => {{ .Values.logstash.output.elasticsearch.hosts | toJson }}
         index => {{ .Values.logstash.output.elasticsearch.index | quote }}
-      }
-      
-      # Debug output (remove in production)
-      stdout {
-        codec => rubydebug
       }
     }

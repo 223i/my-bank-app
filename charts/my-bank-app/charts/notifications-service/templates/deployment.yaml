@@ -41,6 +41,8 @@ spec:
                     key: db-password
               - name: SPRING_CLOUD_CONSUL_ENABLED
                 value: "false"
+              - name: SPRING_PROFILES_ACTIVE
+                value: "kubernetes"
               - name: KEYCLOAK_JWK_SET_URI
                 value: "http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs"
               - name: KAFKA_BOOTSTRAP_SERVERS
@@ -49,6 +51,12 @@ spec:
                 value: {{ .Values.global.kafkaConfig.notificationsTopic | quote }}
               - name: KAFKA_NOTIFICATIONS_GROUP
                 value: {{ .Values.global.kafkaConfig.notificationsGroup | quote }}
+              - name: ZIPKIN_ENDPOINT
+                value: {{ .Values.global.zipkinConfig.endpoint | quote }}
+              - name: LOGSTASH_DESTINATION
+                value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
+              - name: ENVIRONMENT
+                value: {{ .Values.global.environment | quote }}
             {{- with .Values.livenessProbe }}
             livenessProbe:
               {{- toYaml . | nindent 12 }}

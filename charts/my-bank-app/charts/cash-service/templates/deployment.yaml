@@ -27,6 +27,8 @@ spec:
               value: "http://notifications-service:8082"
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
             - name: CASH_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -40,6 +42,12 @@ spec:
               value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
             - name: KAFKA_NOTIFICATIONS_TOPIC
               value: {{ .Values.global.kafkaConfig.notificationsTopic | quote }}
+            - name: ZIPKIN_ENDPOINT
+              value: {{ .Values.global.zipkinConfig.endpoint | quote }}
+            - name: LOGSTASH_DESTINATION
+              value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

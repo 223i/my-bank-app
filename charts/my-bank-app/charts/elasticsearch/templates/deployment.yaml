@@ -80,6 +80,9 @@ spec:
             - name: xpack.security.enabled
               value: "{{ .Values.elasticsearch.security.enabled }}"
           volumeMounts:
+            - name: config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
             - name: storage
               mountPath: /usr/share/elasticsearch/data
       {{- with .Values.nodeSelector }}
@@ -95,6 +98,9 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
+        - name: config
+          configMap:
+            name: {{ include "elasticsearch.fullname" . }}
         - name: storage
           {{- if .Values.elasticsearch.storage.enabled }}
           persistentVolumeClaim:

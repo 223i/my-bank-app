@@ -6,4 +6,4 @@ metadata:
     {{- include "grafana.labels" . | nindent 4 }}
 data:
   datasources.yaml: |
-    {{- toYaml .Values.datasources.datasources.yaml | nindent 4 }}
+    {{- toYaml (index .Values.datasources "datasources.yaml") | nindent 4 }}

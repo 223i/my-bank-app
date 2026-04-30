@@ -25,8 +25,18 @@ spec:
               value: {{ .Values.env.server_port | quote }}
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            - name: SPRING_APPLICATION_NAME
+              value: "gateway-service"
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: "file:/config/"
+            - name: ZIPKIN_ENDPOINT
+              value: {{ .Values.global.zipkinConfig.endpoint | quote }}
+            - name: LOGSTASH_DESTINATION
+              value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
           volumeMounts:
             - name: gateway-config
               mountPath: /config

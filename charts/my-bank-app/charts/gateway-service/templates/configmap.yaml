@@ -34,3 +34,8 @@ data:
                 - RewritePath=/api/cash(?<segment>.*), /cash${segment}
     keycloak:
       jwk-set-uri: http://keycloak:8080/realms/bank-app-realm/protocol/openid-connect/certs
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus

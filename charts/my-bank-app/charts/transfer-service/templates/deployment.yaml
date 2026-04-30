@@ -23,6 +23,8 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.server_port | quote }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
             - name: TRANSFER_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -38,6 +40,14 @@ spec:
               value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
             - name: KAFKA_NOTIFICATIONS_TOPIC
               value: {{ .Values.global.kafkaConfig.notificationsTopic | quote }}
+            - name: ACCOUNTS_SERVICE_URL
+              value: "http://accounts-service:8081"
+            - name: ZIPKIN_ENDPOINT
+              value: {{ .Values.global.zipkinConfig.endpoint | quote }}
+            - name: LOGSTASH_DESTINATION
+              value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}
