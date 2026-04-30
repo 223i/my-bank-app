@@ -17,7 +17,7 @@ data:
               severity: critical
             annotations:
               summary: "High error rate detected"
-              description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.service }}"
+              description: "HTTP 5xx rate exceeded the configured threshold"
 
           - alert: High4xxRate
             expr: rate(http_server_requests_seconds_count{status=~"4.."}[5m]) / rate(http_server_requests_seconds_count[5m]) > 0.1
@@ -26,7 +26,7 @@ data:
               severity: warning
             annotations:
               summary: "High 4xx rate detected"
-              description: "4xx rate is {{ $value | humanizePercentage }} for {{ $labels.service }}"
+              description: "HTTP 4xx rate exceeded the configured threshold"
 
           - alert: HighResponseTime
             expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 1
@@ -35,7 +35,7 @@ data:
               severity: warning
             annotations:
               summary: "High response time detected"
-              description: "95th percentile response time is {{ $value }}s for {{ $labels.service }}"
+              description: "HTTP p95 latency exceeded 1 second"
 
           # JVM Metrics Alerts
           - alert: HighMemoryUsage
@@ -45,7 +45,7 @@ data:
               severity: warning
             annotations:
               summary: "High memory usage detected"
-              description: "Heap memory usage is {{ $value | humanizePercentage }} for {{ $labels.service }}"
+              description: "Heap usage exceeded 80 percent"
 
           - alert: HighCPUUsage
             expr: process_cpu_seconds_total * 100 > 80
@@ -54,35 +54,35 @@ data:
               severity: warning
             annotations:
               summary: "High CPU usage detected"
-              description: "CPU usage is {{ $value }}% for {{ $labels.service }}"
+              description: "CPU usage exceeded the configured threshold"
 
           # Business Metrics Alerts
           - alert: FailedTransfersSpike
-            expr: rate(failed_transfers_total[5m]) > 0.1
+            expr: sum(rate(failed_transfers_total[5m])) > 0.1
             for: 2m
             labels:
               severity: critical
             annotations:
               summary: "Spike in failed transfers detected"
-              description: "Failed transfer rate is {{ $value }} transfers/second"
+              description: "Failed transfer rate exceeded the configured threshold"
 
-          - alert: FailedCashOperationsSpike
-            expr: rate(failed_cash_operations_total[5m]) > 0.1
+          - alert: FailedWithdrawalsSpike
+            expr: sum(rate(failed_withdrawals_total[5m])) > 0.1
             for: 2m
             labels:
               severity: critical
             annotations:
-              summary: "Spike in failed cash operations detected"
-              description: "Failed cash operation rate is {{ $value }} operations/second"
+              summary: "Spike in failed withdrawals detected"
+              description: "Failed withdrawal rate exceeded the configured threshold"
 
           - alert: NotificationFailuresSpike
-            expr: rate(notification_failures_total[5m]) > 0.05
+            expr: sum(rate(notification_failures_total[5m])) > 0.05
             for: 3m
             labels:
               severity: warning
             annotations:
               summary: "Spike in notification failures detected"
-              description: "Notification failure rate is {{ $value }} failures/second"
+              description: "Notification failure rate exceeded the configured threshold"
 
           # Service Availability Alerts
           - alert: ServiceDown
@@ -92,7 +92,7 @@ data:
               severity: critical
             annotations:
               summary: "Service is down"
-              description: "{{ $labels.service }} has been down for more than 1 minute"
+              description: "One of the monitored services has been unavailable for more than 1 minute"
 
           # Kafka Alerts
           - alert: KafkaConsumerLag
@@ -102,4 +102,4 @@ data:
               severity: warning
             annotations:
               summary: "High Kafka consumer lag detected"
-              description: "Consumer lag is {{ $value }} messages for {{ $labels.consumer }}"
+              description: "Kafka consumer lag exceeded the configured threshold"

@@ -31,79 +31,69 @@ resources:
 autoscaling:
   enabled: false
 
+serviceAccount:
+  create: false
+  name: ""
+
 nodeSelector: {}
 
 tolerations: []
 
 affinity: {}
 
-# Prometheus configuration
 config:
   global:
     scrape_interval: 15s
     evaluation_interval: 15s
-  
   rule_files:
     - "/etc/prometheus/rules/*.yml"
-  
   scrape_configs:
-    # Prometheus self-monitoring
     - job_name: 'prometheus'
       static_configs:
         - targets: ['localhost:9090']
-    
-    # Kubernetes API Server
-    - job_name: 'kubernetes-apiservers'
-      kubernetes_sd_configs:
-        - role: endpoints
-      scheme: https
-      tls_config:
-        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-          action: keep
-          regex: default;kubernetes;https
-    
-    # My Bank App Services
-    - job_name: 'my-bank-app-services'
-      kubernetes_sd_configs:
-        - role: endpoints
-          namespaces:
-            names:
-              - bank
-      relabel_configs:
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
-          action: keep
-          regex: true
-        - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
-          action: replace
-          target_label: __metrics_path__
-          regex: (.+)
-        - source_labels: [__address__, __meta_kubernetes_service_annotation_prometheus_io_port]
-          action: replace
-          regex: ([^:]+)(?::\d+)?;(\d+)
-          replacement: $1:$2
-          target_label: __address__
-        - action: labelmap
-          regex: __meta_kubernetes_service_label_(.+)
-        - source_labels: [__meta_kubernetes_namespace]
-          action: replace
-          target_label: kubernetes_namespace
-        - source_labels: [__meta_kubernetes_service_name]
-          action: replace
-          target_label: kubernetes_name
+    - job_name: 'accounts-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['accounts-service:8081']
+          labels:
+            service: accounts-service
+    - job_name: 'notifications-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['notifications-service:8082']
+          labels:
+            service: notifications-service
+    - job_name: 'my-bank-front-app'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['my-bank-front-app:8083']
+          labels:
+            service: my-bank-front-app
+    - job_name: 'cash-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['cash-service:8084']
+          labels:
+            service: cash-service
+    - job_name: 'transfer-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['transfer-service:8085']
+          labels:
+            service: transfer-service
+    - job_name: 'gateway-service'
+      metrics_path: /actuator/prometheus
+      static_configs:
+        - targets: ['gateway-service:8000']
+          labels:
+            service: gateway-service
 
-# Alerting configuration
 alerting:
   alertmanagers:
     - static_configs:
         - targets: []
-      # If you have Alertmanager running, configure it here
-      # - alertmanager:9093
 
-# Storage configuration
 storage:
-  enabled: true
+  enabled: false
   size: 10Gi
-  class: "" # Use default storage class
+  class: ""

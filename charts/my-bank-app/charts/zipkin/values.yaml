@@ -31,6 +31,10 @@ resources:
 autoscaling:
   enabled: false
 
+serviceAccount:
+  create: false
+  name: ""
+
 nodeSelector: {}
 
 tolerations: []

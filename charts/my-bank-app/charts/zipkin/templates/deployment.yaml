@@ -54,7 +54,10 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
             - name: STORAGE_TYPE
-              value: {{ .Values.zipkin.storage.type }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "zipkin.fullname" . }}
+                  key: ZIPKIN_STORAGE_TYPE
             {{- if eq .Values.zipkin.storage.type "elasticsearch" }}
             - name: ES_HOSTS
               value: {{ .Values.zipkin.storage.elasticsearch.hosts }}
