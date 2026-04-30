@@ -3,7 +3,6 @@ package com.iron.service;
 import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -20,22 +19,19 @@ public class CashService {
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
 
-    // Business metrics
-    private final Counter failedCashOperationsCounter;
+    private final MeterRegistry meterRegistry;
 
     public CashService(RestClient accountsRestClient,
                        NotificationProducer notificationProducer,
                        MeterRegistry meterRegistry) {
         this.accountsRestClient = accountsRestClient;
         this.notificationProducer = notificationProducer;
-        this.failedCashOperationsCounter = Counter.builder("failed_cash_operations_total")
-                .description("Total number of failed cash operations")
-                .tag("service", "cash-service")
-                .register(meterRegistry);
+        this.meterRegistry = meterRegistry;
     }
 
     public void processOperation(String login, BigDecimal amount, String type) {
-        String uri = type.equalsIgnoreCase("PUT") ? "/increase-balance" : "/decrease-balance";
+        boolean withdrawal = !type.equalsIgnoreCase("PUT");
+        String uri = withdrawal ? "/decrease-balance" : "/increase-balance";
         String transactionId = UUID.randomUUID().toString();
 
         try {
@@ -55,7 +51,9 @@ public class CashService {
 
         } catch (Exception e) {
             log.error("Cash operation failed: {}", e.getMessage());
-            failedCashOperationsCounter.increment();
+            if (withdrawal) {
+                recordFailedWithdrawal(login);
+            }
             throw new RuntimeException("Не удалось провести операцию: " + e.getMessage());
         }
     }
@@ -77,5 +75,13 @@ public class CashService {
                                  String transactionId, Throwable ex) {
         log.error("Accounts service unavailable: transactionId={}", transactionId, ex);
         throw new RuntimeException("Accounts service временно недоступен. Попробуйте повторить операцию позже");
+    }
+
+    private void recordFailedWithdrawal(String login) {
+        meterRegistry.counter(
+                "failed_withdrawals_total",
+                "service", "cash-service",
+                "login", login
+        ).increment();
     }
 }

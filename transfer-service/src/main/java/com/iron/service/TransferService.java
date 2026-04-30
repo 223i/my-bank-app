@@ -6,7 +6,6 @@ import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,18 +21,14 @@ public class TransferService {
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
 
-    // Business metrics
-    private final Counter failedTransferCounter;
+    private final MeterRegistry meterRegistry;
 
     public TransferService(RestClient accountsRestClient,
                            NotificationProducer notificationProducer,
                            MeterRegistry meterRegistry) {
         this.accountsRestClient = accountsRestClient;
         this.notificationProducer = notificationProducer;
-        this.failedTransferCounter = Counter.builder("failed_transfers_total")
-                .description("Total number of failed transfers")
-                .tag("service", "transfer-service")
-                .register(meterRegistry);
+        this.meterRegistry = meterRegistry;
     }
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
@@ -58,7 +53,7 @@ public class TransferService {
 
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());
-            failedTransferCounter.increment();
+            recordFailedTransfer(fromLogin, toLogin);
             throw new TransferException("Не удалось выполнить перевод: " + e.getMessage());
         }
     }
@@ -85,5 +80,14 @@ public class TransferService {
                                  String transactionId, Throwable ex) {
         log.error("Accounts service unavailable after retries, transactionId={}", transactionId, ex);
         throw new TransferException("Accounts service временно недоступен");
+    }
+
+    private void recordFailedTransfer(String fromLogin, String toLogin) {
+        meterRegistry.counter(
+                "failed_transfers_total",
+                "service", "transfer-service",
+                "from_login", fromLogin,
+                "to_login", toLogin
+        ).increment();
     }
 }

@@ -2,7 +2,7 @@ package com.iron.mybankfront.service;
 
 import com.iron.mybankfront.controller.dto.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -12,10 +12,14 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class GatewayService {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+    private final String gatewayUrl;
 
-    private static final String GATEWAY_URL = "http://gateway-service/api";
+    public GatewayService(RestTemplate restTemplate,
+                          @Value("${gateway.url:http://gateway-service/api}") String gatewayUrl) {
+        this.restTemplate = restTemplate;
+        this.gatewayUrl = gatewayUrl;
+    }
 
     /**
      * Получить данные текущего пользователя. Login не нужен в URL — accounts-service
@@ -23,12 +27,12 @@ public class GatewayService {
      */
     public AccountDto getAccountInfo(String userLogin) {
         log.debug("Fetching account info for user: {}", userLogin);
-        return restTemplate.getForObject(GATEWAY_URL + "/accounts", AccountDto.class);
+        return restTemplate.getForObject(gatewayUrl + "/accounts", AccountDto.class);
     }
 
     public AccountDto changeAccountInfo(AccountUpdateDto dataToUpdate) {
         log.debug("Updating account info");
-        return restTemplate.postForObject(GATEWAY_URL + "/accounts", dataToUpdate, AccountDto.class);
+        return restTemplate.postForObject(gatewayUrl + "/accounts", dataToUpdate, AccountDto.class);
     }
 
     /**
@@ -37,7 +41,7 @@ public class GatewayService {
      */
     public AccountDto changeCashInfo(int value, CashAction action) {
         log.debug("Cash operation: type={}, amount={}", action, value);
-        String url = GATEWAY_URL + "/cash/operation?value=" + value + "&type=" + action.name();
+        String url = gatewayUrl + "/cash/operation?value=" + value + "&type=" + action.name();
         restTemplate.exchange(url, HttpMethod.POST, HttpEntity.EMPTY, Void.class);
         return getAccountInfo(null);
     }
@@ -47,7 +51,7 @@ public class GatewayService {
      */
     public AccountDto transfer(int value, String recipientLogin) {
         log.debug("Transfer to {}, amount={}", recipientLogin, value);
-        String url = GATEWAY_URL + "/transfer?value=" + value + "&login=" + recipientLogin;
+        String url = gatewayUrl + "/transfer?value=" + value + "&login=" + recipientLogin;
         restTemplate.exchange(url, HttpMethod.POST, HttpEntity.EMPTY, Void.class);
         return getAccountInfo(null);
     }

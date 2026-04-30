@@ -9,6 +9,8 @@ import com.iron.model.Account;
 import com.iron.model.ProcessedTransaction;
 import com.iron.repository.AccountRepository;
 import com.iron.repository.ProcessedTransactionRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,12 @@ class AccountServiceTest {
 
     @Mock
     private ProcessedTransactionRepository processedTransactionRepository;
+
+    @Mock
+    private MeterRegistry meterRegistry;
+
+    @Mock
+    private Counter counter;
 
     @InjectMocks
     private AccountService accountService;
@@ -301,6 +309,7 @@ class AccountServiceTest {
     @Test
     @DisplayName("Should handle notification service failure gracefully")
     void sendNotification_Failure() {
+        when(meterRegistry.counter(anyString(), any(String[].class))).thenReturn(counter);
         doThrow(new RuntimeException("Kafka unavailable"))
                 .when(notificationProducer).send(any());
 
