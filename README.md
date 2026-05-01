@@ -292,7 +292,7 @@ kafka-topics.sh --bootstrap-server localhost:9092 --list
 Добавьте записи в `/etc/hosts`:
 
 ```bash
-echo "127.0.0.1 bank.local keycloak.bank.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 bank.local keycloak.bank.local elasticsearch.bank.local kibana.bank.local grafana.bank.local" | sudo tee -a /etc/hosts
 ```
 
 ---
@@ -385,15 +385,15 @@ helm test my-bank-app --namespace bank
 
 ### Доступ к компонентам мониторинга
 
-| Компонент | Внутри кластера | Описание |
-|-----------|----------------|----------|
-| **Zipkin** | http://my-bank-app-zipkin:9411 | Распределенная трассировка |
-| **Prometheus** | http://my-bank-app-prometheus:9090 | Метрики и алерты |
-| **Grafana** | http://my-bank-app-grafana:3000 | Дашборды (admin/admin) |
-| **Kibana** | http://my-bank-app-kibana:5601 | Анализ логов |
-| **Elasticsearch** | http://my-bank-app-elasticsearch:9200 | Поиск логов |
+| Компонент | Внешний URL | Внутри кластера | Описание |
+|-----------|------------|----------------|----------|
+| **Kibana** | http://kibana.bank.local | http://my-bank-app-kibana:5601 | Анализ логов |
+| **Elasticsearch** | http://elasticsearch.bank.local | http://my-bank-app-elasticsearch:9200 | Поиск логов |
+| **Grafana** | http://grafana.bank.local | http://my-bank-app-grafana:3000 | Дашборды (admin/admin) |
+| **Zipkin** | - | http://my-bank-app-zipkin:9411 | Распределенная трассировка |
+| **Prometheus** | - | http://my-bank-app-prometheus:9090 | Метрики и алерты |
 
-> Для внешнего доступа к компонентам мониторинга настройте Ingress или используйте `kubectl port-forward`
+> Kibana, Elasticsearch и Grafana доступны извне через ingress. Остальные компоненты доступны только внутри кластера или через `kubectl port-forward`
 
 ---
 
