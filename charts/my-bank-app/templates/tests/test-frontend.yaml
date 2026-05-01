@@ -7,7 +7,7 @@ metadata:
   annotations:
     "helm.sh/hook": test
     "helm.sh/hook-weight": "7"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   restartPolicy: Never
   containers:
@@ -18,30 +18,21 @@ spec:
         - -c
         - |
           echo "Testing frontend service health..."
-          # Wait for frontend to be ready with increased attempts and timeouts
-          for i in $(seq 1 60); do
-            echo "Attempt $i: Checking frontend availability..."
-            if wget -q --timeout=10 --tries=1 --spider http://my-bank-front-app:8083; then
-              echo "✅ Frontend is healthy!"
-              # Wait a bit more for OAuth2 to be ready
-              echo "Waiting for OAuth2 endpoint..."
-              sleep 30
-              # Test OAuth2 redirect with increased timeout
-              if wget -q --timeout=10 --tries=1 --spider http://my-bank-front-app:8083/oauth2/authorization/keycloak; then
-                echo "✅ OAuth2 endpoint is available!"
+          # Wait for frontend to be ready
+          for i in $(seq 1 30); do
+            if wget -q --spider http://my-bank-front-app:8083; then
+              echo "Frontend is healthy!"
+              # Test OAuth2 redirect
+              if wget -q --spider http://my-bank-front-app:8083/oauth2/authorization/keycloak; then
+                echo "OAuth2 endpoint is available!"
                 exit 0
               else
-                echo "⚠️  Frontend is up but OAuth2 endpoint not available, continuing..."
-                # Don't fail immediately, give OAuth2 more time
-                if [ $i -gt 50 ]; then
-                  echo "❌ OAuth2 endpoint still not available after many attempts"
-                  exit 1
-                fi
+                echo "Frontend is up but OAuth2 endpoint not available"
+                exit 1
               fi
-            else
-              echo "Frontend not ready yet (attempt $i/60)"
             fi
-            sleep 10
+            echo "Attempt $i: Frontend not ready, waiting..."
+            sleep 5
           done
-          echo "❌ Frontend health check failed after 60 attempts"
+          echo "Frontend health check failed after 30 attempts"
           exit 1

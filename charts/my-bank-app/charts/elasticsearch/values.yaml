@@ -46,7 +46,6 @@ elasticsearch:
   # Cluster settings
   cluster:
     name: "my-bank-app-logs"
-    initial_master_nodes: "my-bank-app-elasticsearch-0"
   
   # JVM settings
   jvm:

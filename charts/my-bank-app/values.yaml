@@ -118,20 +118,3 @@ kafka:
       protocol: PLAINTEXT
   sasl:
     enabled: false
-  extraEnvVars:
-    - name: KAFKA_PORT
-      value: "9092"
-  livenessProbe:
-    tcpSocket:
-      port: 9092
-    initialDelaySeconds: 60
-    timeoutSeconds: 10
-    periodSeconds: 30
-    failureThreshold: 3
-  readinessProbe:
-    tcpSocket:
-      port: 9092
-    initialDelaySeconds: 30
-    timeoutSeconds: 10
-    periodSeconds: 30
-    failureThreshold: 3
