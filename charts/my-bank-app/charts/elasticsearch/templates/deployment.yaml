@@ -79,8 +79,8 @@ spec:
               value: {{ .Values.elasticsearch.cluster.name }}
             - name: network.host
               value: {{ .Values.elasticsearch.network.host }}
-            - name: xpack.security.enabled
-              value: "{{ .Values.elasticsearch.security.enabled }}"
+#            - name: xpack.security.enabled
+#              value: "{{ .Values.elasticsearch.security.enabled }}"
           volumeMounts:
             - name: config
               mountPath: /usr/share/elasticsearch/config/elasticsearch.yml

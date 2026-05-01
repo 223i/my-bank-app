@@ -9,4 +9,4 @@ data:
     server.host: {{ .Values.kibana.server.host }}
     server.port: {{ .Values.kibana.server.port }}
     elasticsearch.hosts: {{ .Values.kibana.elasticsearch.hosts | toJson }}
-    xpack.security.enabled: {{ .Values.kibana.security.enabled }}
+    #xpack.security.enabled: {{ .Values.kibana.security.enabled }}
