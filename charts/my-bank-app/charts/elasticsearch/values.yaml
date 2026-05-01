@@ -23,10 +23,10 @@ ingress:
 resources:
   limits:
     cpu: 1000m
-    memory: 2Gi
+    memory: 1536Mi
   requests:
     cpu: 500m
-    memory: 1Gi
+    memory: 768Mi
 
 autoscaling:
   enabled: false
@@ -49,8 +49,8 @@ elasticsearch:
   
   # JVM settings
   jvm:
-    xms: "1g"
-    xmx: "1g"
+    xms: "512m"
+    xmx: "512m"
   
   # Discovery settings
   discovery:
