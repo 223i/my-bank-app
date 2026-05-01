@@ -73,8 +73,6 @@ spec:
               value: "-Xms{{ .Values.elasticsearch.jvm.xms }} -Xmx{{ .Values.elasticsearch.jvm.xmx }}"
             - name: cluster.name
               value: {{ .Values.elasticsearch.cluster.name }}
-            - name: cluster.initial_master_nodes
-              value: ""
             - name: network.host
               value: {{ .Values.elasticsearch.network.host }}
             - name: xpack.security.enabled
