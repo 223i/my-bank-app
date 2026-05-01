@@ -79,7 +79,7 @@ public class CashService {
 
     private void recordFailedWithdrawal(String login) {
         meterRegistry.counter(
-                "failed_withdrawals_total",
+                "failed_cash_operations_total",
                 "service", "cash-service",
                 "login", login
         ).increment();

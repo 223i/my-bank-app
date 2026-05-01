@@ -41,6 +41,8 @@ server:
 
 management:
   tracing:
+    propagation:
+      type: b3
     sampling:
       probability: 1.0
   zipkin:

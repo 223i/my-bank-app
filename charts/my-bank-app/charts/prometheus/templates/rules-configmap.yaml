@@ -48,7 +48,7 @@ data:
               description: "Heap usage exceeded 80 percent"
 
           - alert: HighCPUUsage
-            expr: process_cpu_seconds_total * 100 > 80
+            expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
             for: 5m
             labels:
               severity: warning
@@ -67,7 +67,7 @@ data:
               description: "Failed transfer rate exceeded the configured threshold"
 
           - alert: FailedWithdrawalsSpike
-            expr: sum(rate(failed_withdrawals_total[5m])) > 0.1
+            expr: sum(rate(failed_cash_operations_total[5m])) > 0.1
             for: 2m
             labels:
               severity: critical
@@ -95,11 +95,5 @@ data:
               description: "One of the monitored services has been unavailable for more than 1 minute"
 
           # Kafka Alerts
-          - alert: KafkaConsumerLag
-            expr: kafka_consumer_lag_sum > 1000
-            for: 5m
-            labels:
-              severity: warning
-            annotations:
-              summary: "High Kafka consumer lag detected"
-              description: "Kafka consumer lag exceeded the configured threshold"
+          # NOTE: Kafka lag metrics require an exporter (JMX exporter / kafka-exporter).
+          # This project doesn't deploy one, so we avoid shipping non-functional rules here.

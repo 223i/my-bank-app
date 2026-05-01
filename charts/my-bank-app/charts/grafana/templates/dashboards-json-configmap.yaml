@@ -125,7 +125,7 @@ data:
           "type": "timeseries",
           "targets": [
             {
-              "expr": "sum(rate(failed_withdrawals_total[5m]))",
+              "expr": "sum(rate(failed_cash_operations_total[5m]))",
               "legendFormat": "withdrawals/sec"
             }
           ]
@@ -158,7 +158,7 @@ data:
           "type": "table",
           "targets": [
             {
-              "expr": "sum by (login) (increase(failed_withdrawals_total[1h]))",
+              "expr": "sum by (login) (increase(failed_cash_operations_total[1h]))",
               "format": "table"
             }
           ]

@@ -61,8 +61,6 @@ spec:
               value: "{{ .Values.kibana.server.port }}"
             - name: XPACK_SECURITY_ENABLED
               value: "{{ .Values.kibana.security.enabled }}"
-            - name: xpack.security.enabled
-              value: "{{ .Values.kibana.security.enabled }}"
           volumeMounts:
             - name: config
               mountPath: /usr/share/kibana/config/kibana.yml
