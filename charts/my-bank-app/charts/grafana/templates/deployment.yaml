@@ -56,9 +56,15 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
             - name: GF_SECURITY_ADMIN_USER
-              value: {{ .Values.grafana.adminUser }}
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: grafana-admin-user
             - name: GF_SECURITY_ADMIN_PASSWORD
-              value: {{ .Values.grafana.adminPassword }}
+              valueFrom:
+                secretKeyRef:
+                  name: bank-secrets
+                  key: grafana-admin-password
             - name: GF_SECURITY_SECRET_KEY
               value: {{ .Values.grafana.security.secretKey }}
             - name: GF_PATHS_DATA

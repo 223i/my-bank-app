@@ -45,14 +45,6 @@ affinity: {}
 
 # Grafana configuration
 grafana:
-  # Admin credentials
-  adminUser: admin
-  adminPassword: admin
-  
-  # Security
-  security:
-    secretKey: "your-secret-key"
-    
   # Database (uses SQLite by default)
   persistence:
     enabled: true
