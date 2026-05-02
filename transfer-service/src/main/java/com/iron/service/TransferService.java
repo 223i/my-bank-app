@@ -7,6 +7,7 @@ import com.iron.exception.TransferException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -16,20 +17,12 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TransferService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
-
     private final MeterRegistry meterRegistry;
-
-    public TransferService(RestClient accountsRestClient,
-                           NotificationProducer notificationProducer,
-                           MeterRegistry meterRegistry) {
-        this.accountsRestClient = accountsRestClient;
-        this.notificationProducer = notificationProducer;
-        this.meterRegistry = meterRegistry;
-    }
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
         log.info("Transfer from {} to {} for amount {}", fromLogin, toLogin, amount);

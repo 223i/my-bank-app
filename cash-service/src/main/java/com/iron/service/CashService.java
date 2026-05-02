@@ -4,6 +4,7 @@ import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -14,20 +15,12 @@ import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class CashService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
-
     private final MeterRegistry meterRegistry;
-
-    public CashService(RestClient accountsRestClient,
-                       NotificationProducer notificationProducer,
-                       MeterRegistry meterRegistry) {
-        this.accountsRestClient = accountsRestClient;
-        this.notificationProducer = notificationProducer;
-        this.meterRegistry = meterRegistry;
-    }
 
     public void processOperation(String login, BigDecimal amount, String type) {
         boolean withdrawal = !type.equalsIgnoreCase("PUT");

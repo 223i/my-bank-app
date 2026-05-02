@@ -4,22 +4,17 @@ import com.iron.dto.NotificationRequest;
 import com.iron.model.Notification;
 import com.iron.repository.NotificationRepository;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-
     private final MeterRegistry meterRegistry;
-
-    public NotificationService(NotificationRepository notificationRepository,
-                               MeterRegistry meterRegistry) {
-        this.notificationRepository = notificationRepository;
-        this.meterRegistry = meterRegistry;
-    }
 
     public void save(NotificationRequest request) {
         try {
