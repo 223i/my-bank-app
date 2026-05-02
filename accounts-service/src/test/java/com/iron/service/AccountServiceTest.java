@@ -45,9 +45,6 @@ class AccountServiceTest {
     private ProcessedTransactionRepository processedTransactionRepository;
 
     @Mock
-    private MeterRegistry meterRegistry;
-
-    @Mock
     private Counter counter;
 
     @InjectMocks
@@ -309,7 +306,6 @@ class AccountServiceTest {
     @Test
     @DisplayName("Should handle notification service failure gracefully")
     void sendNotification_Failure() {
-        when(meterRegistry.counter(anyString(), any(String[].class))).thenReturn(counter);
         doThrow(new RuntimeException("Kafka unavailable"))
                 .when(notificationProducer).send(any());
 

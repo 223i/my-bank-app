@@ -1,11 +1,10 @@
 package com.iron.service;
 
+import com.iron.dto.NotificationRequest;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.dto.NotificationRequest;
 import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,16 +36,13 @@ class TransferServiceTest {
     private NotificationProducer notificationProducer;
 
     @Mock
-    private MeterRegistry meterRegistry;
-
-    @Mock
     private Counter counter;
 
     private TransferService transferService;
 
     @BeforeEach
     void setUp() {
-        transferService = new TransferService(accountsRestClient, notificationProducer, meterRegistry);
+        transferService = new TransferService(accountsRestClient, notificationProducer, counter);
     }
 
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {
@@ -123,7 +119,6 @@ class TransferServiceTest {
     @Test
     @DisplayName("Should throw TransferException when accounts service fails (no rollback)")
     void makeTransfer_throwsWhenAccountsServiceFails() {
-        when(meterRegistry.counter(anyString(), any(String[].class))).thenReturn(counter);
 
         RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
         RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
@@ -146,7 +141,6 @@ class TransferServiceTest {
     @Test
     @DisplayName("Should throw TransferException when connection refused (no rollback)")
     void makeTransfer_handlesRestClientExceptions() {
-        when(meterRegistry.counter(anyString(), any(String[].class))).thenReturn(counter);
         when(accountsRestClient.patch()).thenThrow(new RestClientException("Connection refused"));
 
         assertThatThrownBy(() -> transferService.makeTransfer("jdoe", "alice_99", BigDecimal.valueOf(100)))

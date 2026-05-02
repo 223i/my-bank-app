@@ -1,6 +1,6 @@
 package com.iron.service;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,13 +31,13 @@ class CashServiceTest {
     private NotificationProducer notificationProducer;
 
     @Mock
-    private MeterRegistry meterRegistry;
+    private Counter counter;
 
     private CashService cashService;
 
     @BeforeEach
     void setUp() {
-        cashService = new CashService(accountsRestClient, notificationProducer, meterRegistry);
+        cashService = new CashService(accountsRestClient, notificationProducer, counter);
     }
 
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {

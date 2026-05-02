@@ -3,7 +3,7 @@ package com.iron.service;
 import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -20,7 +20,7 @@ public class CashService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
-    private final MeterRegistry meterRegistry;
+    private final Counter failedCashOperationsCounter;
 
     public void processOperation(String login, BigDecimal amount, String type) {
         boolean withdrawal = !type.equalsIgnoreCase("PUT");
@@ -45,7 +45,7 @@ public class CashService {
         } catch (Exception e) {
             log.error("Cash operation failed: {}", e.getMessage());
             if (withdrawal) {
-                recordFailedWithdrawal(login);
+                failedCashOperationsCounter.increment();
             }
             throw new RuntimeException("Не удалось провести операцию: " + e.getMessage());
         }
@@ -68,13 +68,5 @@ public class CashService {
                                  String transactionId, Throwable ex) {
         log.error("Accounts service unavailable: transactionId={}", transactionId, ex);
         throw new RuntimeException("Accounts service временно недоступен. Попробуйте повторить операцию позже");
-    }
-
-    private void recordFailedWithdrawal(String login) {
-        meterRegistry.counter(
-                "failed_cash_operations_total",
-                "service", "cash-service",
-                "login", login
-        ).increment();
     }
 }

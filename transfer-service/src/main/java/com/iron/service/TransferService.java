@@ -6,7 +6,7 @@ import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class TransferService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
-    private final MeterRegistry meterRegistry;
+    private final Counter failedTransferCounter;
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
         log.info("Transfer from {} to {} for amount {}", fromLogin, toLogin, amount);
@@ -46,7 +46,7 @@ public class TransferService {
 
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());
-            recordFailedTransfer(fromLogin, toLogin);
+            failedTransferCounter.increment();
             throw new TransferException("Не удалось выполнить перевод: " + e.getMessage());
         }
     }
@@ -73,14 +73,5 @@ public class TransferService {
                                  String transactionId, Throwable ex) {
         log.error("Accounts service unavailable after retries, transactionId={}", transactionId, ex);
         throw new TransferException("Accounts service временно недоступен");
-    }
-
-    private void recordFailedTransfer(String fromLogin, String toLogin) {
-        meterRegistry.counter(
-                "failed_transfers_total",
-                "service", "transfer-service",
-                "from_login", fromLogin,
-                "to_login", toLogin
-        ).increment();
     }
 }
