@@ -9,11 +9,6 @@ data:
     [server]
     http_port = 3000
     
-    [security]
-    admin_user = {{ .Values.grafana.adminUser }}
-    admin_password = {{ .Values.grafana.adminPassword }}
-    secret_key = {{ .Values.grafana.security.secretKey }}
-    
     [database]
     type = sqlite3
     path = /var/lib/grafana/grafana.db

@@ -7,6 +7,19 @@ metadata:
 data:
   logstash.conf: |
     input {
+      # Kafka input for application logs (primary)
+      kafka {
+        bootstrap_servers => "${KAFKA_BOOTSTRAP_SERVERS}"
+        topics => ["${KAFKA_LOGS_TOPIC}"]
+        group_id => "${KAFKA_LOGS_GROUP}"
+        codec => json
+        auto_offset_reset => "earliest"
+        consumer_threads => 2
+        fetch_min_bytes => "1"
+        fetch_max_wait_ms => "100"
+      }
+
+      # TCP input (legacy, for backward compatibility)
       tcp {
         port => {{ .Values.logstash.input.beats.port }}
         codec => json_lines
