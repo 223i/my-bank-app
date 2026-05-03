@@ -1,11 +1,12 @@
 package com.iron.service;
 
+import com.iron.dto.NotificationRequest;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class TransferService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
+    private final Counter failedTransferCounter;
 
     public void makeTransfer(String fromLogin, String toLogin, BigDecimal amount) {
         log.info("Transfer from {} to {} for amount {}", fromLogin, toLogin, amount);
@@ -44,6 +46,7 @@ public class TransferService {
 
         } catch (Exception e) {
             log.error("Transfer failed: {}", e.getMessage());
+            failedTransferCounter.increment();
             throw new TransferException("Не удалось выполнить перевод: " + e.getMessage());
         }
     }

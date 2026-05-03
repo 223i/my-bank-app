@@ -1,0 +1,17 @@
+{{- if .Values.elasticsearch.storage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "elasticsearch.fullname" . }}
+  labels:
+    {{- include "elasticsearch.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.elasticsearch.storage.size }}
+  {{- if .Values.elasticsearch.storage.class }}
+  storageClassName: {{ .Values.elasticsearch.storage.class }}
+  {{- end }}
+{{- end }}

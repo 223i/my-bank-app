@@ -32,10 +32,11 @@ public class CashConfig {
     }
 
     @Bean
-    public RestClient accountsRestClient(OAuth2AuthorizedClientManager manager) {
+    public RestClient accountsRestClient(OAuth2AuthorizedClientManager manager,
+                                         RestClient.Builder restClientBuilder) {
         var interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
         interceptor.setClientRegistrationIdResolver(request -> "cash-service-client");
-        return RestClient.builder()
+        return restClientBuilder
                 .baseUrl(accountsServiceUrl)
                 .requestInterceptor(interceptor)
                 .build();

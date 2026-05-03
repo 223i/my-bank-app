@@ -12,7 +12,7 @@ import java.util.Map;
 @Configuration
 public class KafkaSecurityConfig {
 
-    @Bean
+    @Bean("kafkaJwtAuthenticationConverter")
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {

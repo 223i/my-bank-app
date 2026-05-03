@@ -26,7 +26,8 @@ public class SecureNotificationConsumer {
 
     @KafkaListener(
             topics = "${app.kafka.topics.notifications}",
-            groupId = "${app.kafka.consumer.group-id}"
+            groupId = "${app.kafka.consumer.group-id}",
+            containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(NotificationRequest request, Acknowledgment acknowledgment) {
         try {

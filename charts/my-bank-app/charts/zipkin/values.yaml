@@ -1,0 +1,53 @@
+replicaCount: 1
+
+image:
+  repository: openzipkin/zipkin
+  pullPolicy: IfNotPresent
+  tag: "2.24"
+
+service:
+  type: ClusterIP
+  port: 9411
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: zipkin.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+serviceAccount:
+  create: false
+  name: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Zipkin configuration
+zipkin:
+  # Storage type: mem, mysql, cassandra, elasticsearch
+  storage:
+    type: mem
+    # For production use, configure persistent storage
+    # elasticsearch:
+    #   hosts: http://elasticsearch:9200
+    #   index: zipkin
+    #   timeout: 10s

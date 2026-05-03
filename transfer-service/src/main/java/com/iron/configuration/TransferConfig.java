@@ -32,10 +32,11 @@ public class TransferConfig {
     }
 
     @Bean
-    public RestClient accountsRestClient(OAuth2AuthorizedClientManager manager) {
+    public RestClient accountsRestClient(OAuth2AuthorizedClientManager manager,
+                                         RestClient.Builder restClientBuilder) {
         OAuth2ClientHttpRequestInterceptor interceptor = new OAuth2ClientHttpRequestInterceptor(manager);
         interceptor.setClientRegistrationIdResolver(request -> "transfer-service-client");
-        return RestClient.builder()
+        return restClientBuilder
                 .baseUrl(accountsServiceUrl)
                 .requestInterceptor(interceptor)
                 .build();

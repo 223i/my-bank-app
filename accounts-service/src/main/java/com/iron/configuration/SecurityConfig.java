@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers("/*/decrease-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .requestMatchers("/*/increase-balance").hasAuthority("ROLE_ACCOUNTS_INTERNAL")
                         .anyRequest().authenticated()
@@ -34,7 +34,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
+    @Bean("webJwtAuthenticationConverter")
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {

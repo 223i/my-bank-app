@@ -1,0 +1,17 @@
+{{- if .Values.logstash.storage.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "logstash.fullname" . }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.logstash.storage.size }}
+  {{- if .Values.logstash.storage.class }}
+  storageClassName: {{ .Values.logstash.storage.class }}
+  {{- end }}
+{{- end }}

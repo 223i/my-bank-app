@@ -1,7 +1,7 @@
 package com.iron;
 
 import com.iron.dto.NotificationRequest;
-import com.iron.service.NotificationConsumer;
+import com.iron.service.SecureNotificationConsumer;
 import com.iron.service.NotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +23,7 @@ class NotificationConsumerTest {
     private Acknowledgment acknowledgment;
 
     @InjectMocks
-    private NotificationConsumer notificationConsumer;
+    private SecureNotificationConsumer notificationConsumer;
 
     @Test
     void shouldSaveAndAcknowledgeMessage() {
@@ -58,5 +58,69 @@ class NotificationConsumerTest {
 
         verify(notificationService).save(request);
         verify(acknowledgment, never()).acknowledge();
+    }
+
+    @Test
+    void shouldRejectUnauthorizedNotification() {
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user")
+                .message("msg")
+                .type("TRANSFER")
+                .sourceService("test-service")
+                .roles(java.util.List.of("ROLE_USER"))
+                .build();
+
+        notificationConsumer.consume(request, acknowledgment);
+
+        verify(notificationService, never()).save(request);
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    void shouldRejectNotificationWithoutRoles() {
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user")
+                .message("msg")
+                .type("TRANSFER")
+                .sourceService("test-service")
+                .roles(null)
+                .build();
+
+        notificationConsumer.consume(request, acknowledgment);
+
+        verify(notificationService, never()).save(request);
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    void shouldRejectInternalNotificationWithoutInternalRole() {
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user")
+                .message("msg")
+                .type("INTERNAL")
+                .sourceService("test-service")
+                .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER"))
+                .build();
+
+        notificationConsumer.consume(request, acknowledgment);
+
+        verify(notificationService, never()).save(request);
+        verify(acknowledgment).acknowledge();
+    }
+
+    @Test
+    void shouldAcceptInternalNotificationWithRequiredRoles() {
+        NotificationRequest request = NotificationRequest.builder()
+                .recipientLogin("user")
+                .message("msg")
+                .type("INTERNAL")
+                .sourceService("test-service")
+                .roles(java.util.List.of("ROLE_NOTIFICATIONS_USER", "ROLE_ACCOUNTS_INTERNAL"))
+                .build();
+
+        notificationConsumer.consume(request, acknowledgment);
+
+        verify(notificationService).save(request);
+        verify(acknowledgment).acknowledge();
     }
 }

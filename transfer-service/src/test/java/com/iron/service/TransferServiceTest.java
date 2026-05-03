@@ -1,9 +1,10 @@
 package com.iron.service;
 
+import com.iron.dto.NotificationRequest;
 import com.iron.exception.InvalidTransferAmountException;
 import com.iron.exception.SelfTransferException;
 import com.iron.exception.TransferException;
-import com.iron.dto.NotificationRequest;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,11 +35,14 @@ class TransferServiceTest {
     @Mock
     private NotificationProducer notificationProducer;
 
+    @Mock
+    private Counter counter;
+
     private TransferService transferService;
 
     @BeforeEach
     void setUp() {
-        transferService = new TransferService(accountsRestClient, notificationProducer);
+        transferService = new TransferService(accountsRestClient, notificationProducer, counter);
     }
 
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {
@@ -115,6 +119,7 @@ class TransferServiceTest {
     @Test
     @DisplayName("Should throw TransferException when accounts service fails (no rollback)")
     void makeTransfer_throwsWhenAccountsServiceFails() {
+
         RestClient.RequestBodyUriSpec uriSpec = mock(RestClient.RequestBodyUriSpec.class);
         RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
         RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);

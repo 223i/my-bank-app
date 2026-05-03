@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "logstash.fullname" . }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+data:
+  logstash.conf: |
+    input {
+      # Kafka input for application logs
+      kafka {
+        bootstrap_servers => "${KAFKA_BOOTSTRAP_SERVERS}"
+        topics => ["${KAFKA_LOGS_TOPIC}"]
+        group_id => "${KAFKA_LOGS_GROUP}"
+        codec => json
+        auto_offset_reset => "earliest"
+        consumer_threads => 2
+        fetch_min_bytes => "1"
+        fetch_max_wait_ms => "100"
+      }
+    }
+
+    filter {
+      if ![timestamp] {
+        mutate {
+          add_field => { "timestamp" => "%{@timestamp}" }
+        }
+      }
+
+      date {
+        match => [ "timestamp", "ISO8601" ]
+        target => "@timestamp"
+      }
+
+      if [service] {
+        mutate {
+          add_field => { "application" => "%{service}" }
+        }
+      }
+
+      if [message] {
+        mutate {
+          gsub => [
+            "message", "(?i)password[=:]\\s*\\S+", "password=*****",
+            "message", "(?i)secret[=:]\\s*\\S+", "secret=*****",
+            "message", "\\b\\d{16}\\b", "XXXXXXXXXXXXXXXX"
+          ]
+        }
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => {{ .Values.logstash.output.elasticsearch.hosts | toJson }}
+        index => {{ .Values.logstash.output.elasticsearch.index | quote }}
+      }
+    }

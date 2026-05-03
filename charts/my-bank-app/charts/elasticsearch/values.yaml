@@ -1,0 +1,73 @@
+replicaCount: 1
+
+image:
+  repository: docker.elastic.co/elasticsearch/elasticsearch
+  pullPolicy: IfNotPresent
+  tag: "8.15.4"
+
+service:
+  type: ClusterIP
+  port: 9200
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: elasticsearch.bank.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1536Mi
+  requests:
+    cpu: 500m
+    memory: 768Mi
+
+autoscaling:
+  enabled: false
+
+serviceAccount:
+  create: false
+  name: ""
+
+nodeSelector: {}
+
+tolerations: {}
+
+affinity: {}
+
+# Elasticsearch configuration
+elasticsearch:
+  # Cluster settings
+  cluster:
+    name: "my-bank-app-logs"
+  
+  # JVM settings
+  jvm:
+    xms: "512m"
+    xmx: "512m"
+  
+  # Discovery settings
+  discovery:
+    type: "single-node"
+  
+  # Network settings
+  network:
+    host: "0.0.0.0"
+  
+  # Security settings
+  security:
+    enabled: false  # Disable for simplicity in demo
+  
+  # Storage configuration
+  storage:
+    enabled: true
+    size: 10Gi
+    class: "" # Use default storage class

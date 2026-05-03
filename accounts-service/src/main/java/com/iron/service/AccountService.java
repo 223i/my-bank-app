@@ -10,6 +10,7 @@ import com.iron.model.Account;
 import com.iron.model.ProcessedTransaction;
 import com.iron.repository.AccountRepository;
 import com.iron.repository.ProcessedTransactionRepository;
+import io.micrometer.core.instrument.Counter;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final NotificationProducer notificationProducer;
     private final ProcessedTransactionRepository processedTransactionRepository;
+    private final Counter notificationFailureCounter;
 
     public AccountDto getAccount(String login) {
         log.info("Getting account by login: {}", login);
@@ -124,6 +126,7 @@ public class AccountService {
             notificationProducer.send(request);
         } catch (Exception e) {
             log.error("Failed to send notification to {}: {}", login, e.getMessage());
+            notificationFailureCounter.increment();
         }
     }
 
