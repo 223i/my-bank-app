@@ -7,10 +7,6 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: beats
-      protocol: TCP
-      name: beats
     - port: 9600
       targetPort: http
       protocol: TCP

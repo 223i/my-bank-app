@@ -46,9 +46,6 @@ spec:
               value: "http://accounts-service:8081"
             - name: ZIPKIN_ENDPOINT
               value: {{ .Values.global.zipkinConfig.endpoint | quote }}
-            # Legacy Logstash TCP endpoint (optional, for backward compatibility)
-            # - name: LOGSTASH_DESTINATION
-            #   value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
             - name: ENVIRONMENT
               value: {{ .Values.global.environment | quote }}
           {{- with .Values.livenessProbe }}

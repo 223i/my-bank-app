@@ -93,7 +93,3 @@ data:
             annotations:
               summary: "Service is down"
               description: "One of the monitored services has been unavailable for more than 1 minute"
-
-          # Kafka Alerts
-          # NOTE: Kafka lag metrics require an exporter (JMX exporter / kafka-exporter).
-          # This project doesn't deploy one, so we avoid shipping non-functional rules here.
