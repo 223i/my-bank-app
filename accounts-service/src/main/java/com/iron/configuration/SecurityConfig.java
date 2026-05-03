@@ -34,7 +34,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
+    @Bean("webJwtAuthenticationConverter")
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {

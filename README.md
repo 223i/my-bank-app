@@ -285,6 +285,22 @@ kafka-topics.sh --bootstrap-server localhost:9092 --list
 - Docker
 - `kubectl`
 - `helm` ≥ 3.8
+- Kubernetes cluster с включенным ingress controller
+
+---
+### Шаг 0 — Включение Ingress Controller (если не включен)
+Для kind или других кластеров — установите NGINX Ingress Controller:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+```
+
+Подождите, пока ingress controller будет готов:
+```bash
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+```
 
 ---
 ### Шаг 1 — Настройка /etc/hosts

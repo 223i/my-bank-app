@@ -59,9 +59,9 @@ spec:
                 value: {{ .Values.global.environment | quote }}
             {{- with .Values.livenessProbe }}
             livenessProbe:
-              {{- toYaml . | nindent 12 }}
+              {{- toYaml . | nindent 14 }}
             {{- end }}
             {{- with .Values.readinessProbe }}
             readinessProbe:
-              {{- toYaml . | nindent 12 }}
+              {{- toYaml . | nindent 14 }}
             {{- end }}

@@ -13,7 +13,7 @@ spring:
       properties:
         spring.json.trusted.packages: "com.iron.*"
     listener:
-      ack-mode: record
+      ack-mode: manual
       observation-enabled: true
   cloud:
     consul:
