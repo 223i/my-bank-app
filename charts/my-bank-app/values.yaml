@@ -90,6 +90,8 @@ global:
     bootstrapServers: "my-bank-app-kafka:9092"
     notificationsTopic: "notifications.events"
     notificationsGroup: "notifications-service"
+    logsTopic: "application.logs"
+    logsGroup: "logstash-logs-consumer"
   zipkinConfig:
     endpoint: "http://my-bank-app-zipkin:9411/api/v2/spans"
   prometheusConfig:
@@ -118,3 +120,8 @@ kafka:
       protocol: PLAINTEXT
   sasl:
     enabled: false
+  topics:
+    logs: application.logs
+    logsPartitions: 6
+    logsReplicationFactor: 1
+    logsRetentionHours: 168

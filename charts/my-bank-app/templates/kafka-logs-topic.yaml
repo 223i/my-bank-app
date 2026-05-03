@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-bank-app.fullname" . }}-kafka-logs-topic
+  labels:
+    {{- include "my-bank-app.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+data:
+  create-topic.sh: |
+    #!/bin/bash
+    set -e
+    
+    KAFKA_BOOTSTRAP="{{ .Values.global.kafkaConfig.bootstrapServers }}"
+    TOPIC="{{ .Values.kafka.topics.logs }}"
+    PARTITIONS="{{ .Values.kafka.topics.logsPartitions }}"
+    REPLICATION="{{ .Values.kafka.topics.logsReplicationFactor }}"
+    RETENTION_MS="{{ mul .Values.kafka.topics.logsRetentionHours 3600000 }}"
+    
+    echo "Creating Kafka topic for logs: $TOPIC"
+    
+    # Wait for Kafka to be ready
+    until kafka-broker-api-versions --bootstrap-server $KAFKA_BOOTSTRAP 2>/dev/null; do
+      echo "Waiting for Kafka to be available..."
+      sleep 5
+    done
+    
+    # Create topic if it doesn't exist
+    if ! kafka-topics --bootstrap-server $KAFKA_BOOTSTRAP --list | grep -q "^${TOPIC}$"; then
+      kafka-topics --bootstrap-server $KAFKA_BOOTSTRAP \
+        --create \
+        --topic $TOPIC \
+        --partitions $PARTITIONS \
+        --replication-factor $REPLICATION \
+        --config retention.ms=$RETENTION_MS \
+        --config cleanup.policy=delete \
+        --config compression.type=lz4
+      echo "Topic $TOPIC created successfully"
+    else
+      echo "Topic $TOPIC already exists"
+    fi
