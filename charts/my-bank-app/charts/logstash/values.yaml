@@ -1,3 +1,9 @@
+global:
+  kafkaConfig:
+    bootstrapServers: "my-bank-app-kafka:9092"
+    logsTopic: "application.logs"
+    logsGroup: "logstash-logs-consumer"
+
 replicaCount: 1
 
 image:
@@ -78,8 +84,6 @@ logstash:
     mutate:
       replace:
         # Mask account numbers (simplified)
-        message: '%{message}'
-        # Mask passwords (simplified)
         message: '%{message}'
   
   # Output configuration

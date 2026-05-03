@@ -42,10 +42,13 @@ spec:
               value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
             - name: KAFKA_NOTIFICATIONS_TOPIC
               value: {{ .Values.global.kafkaConfig.notificationsTopic | quote }}
+            - name: KAFKA_LOGS_TOPIC
+              value: {{ .Values.global.kafkaConfig.logsTopic | quote }}
             - name: ZIPKIN_ENDPOINT
               value: {{ .Values.global.zipkinConfig.endpoint | quote }}
-            - name: LOGSTASH_DESTINATION
-              value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
+            # Legacy Logstash TCP endpoint (optional, for backward compatibility)
+            # - name: LOGSTASH_DESTINATION
+            #   value: {{ .Values.global.elkConfig.logstashEndpoint | quote }}
             - name: ENVIRONMENT
               value: {{ .Values.global.environment | quote }}
           {{- with .Values.livenessProbe }}

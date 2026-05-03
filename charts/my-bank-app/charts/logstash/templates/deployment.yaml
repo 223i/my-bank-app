@@ -68,6 +68,12 @@ spec:
               value: "{{ .Values.logstash.pipeline.batch_size }}"
             - name: pipeline.batch.delay
               value: "{{ .Values.logstash.pipeline.batch_delay }}"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
+            - name: KAFKA_LOGS_TOPIC
+              value: {{ .Values.global.kafkaConfig.logsTopic | quote }}
+            - name: KAFKA_LOGS_GROUP
+              value: {{ .Values.global.kafkaConfig.logsGroup | quote }}
           volumeMounts:
             - name: config
               mountPath: /usr/share/logstash/pipeline/logstash.conf

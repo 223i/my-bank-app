@@ -1,3 +1,12 @@
+global:
+  kafkaConfig:
+    bootstrapServers: "my-bank-app-kafka:9092"
+    logsTopic: "application.logs"
+    logsGroup: "logstash-logs-consumer"
+  zipkinConfig:
+    endpoint: "http://my-bank-app-zipkin:9411/api/v2/spans"
+  environment: "kubernetes"
+
 replicaCount: 1
 
 image:
