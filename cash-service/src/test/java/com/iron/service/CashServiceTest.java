@@ -1,11 +1,11 @@
 package com.iron.service;
 
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClient;
@@ -30,11 +30,14 @@ class CashServiceTest {
     @Mock
     private NotificationProducer notificationProducer;
 
+    @Mock
+    private Counter counter;
+
     private CashService cashService;
 
     @BeforeEach
     void setUp() {
-        cashService = new CashService(accountsRestClient, notificationProducer);
+        cashService = new CashService(accountsRestClient, notificationProducer, counter);
     }
 
     private RestClient.RequestBodyUriSpec mockAccountsChainSuccess() {

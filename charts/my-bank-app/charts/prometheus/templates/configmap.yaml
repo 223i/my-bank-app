@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "prometheus.fullname" . }}
+  labels:
+    {{- include "prometheus.labels" . | nindent 4 }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: {{ .Values.config.global.scrape_interval }}
+      evaluation_interval: {{ .Values.config.global.evaluation_interval }}
+    
+    rule_files:
+      {{- range .Values.config.rule_files }}
+      - {{ . }}
+      {{- end }}
+    
+    scrape_configs:
+      {{- toYaml .Values.config.scrape_configs | nindent 6 }}
+    
+    alerting:
+      {{- toYaml .Values.alerting | nindent 6 }}

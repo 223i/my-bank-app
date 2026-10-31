@@ -3,6 +3,7 @@ package com.iron.service;
 import com.iron.dto.NotificationRequest;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
@@ -13,15 +14,17 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class CashService {
 
     private final RestClient accountsRestClient;
     private final NotificationProducer notificationProducer;
+    private final Counter failedCashOperationsCounter;
 
     public void processOperation(String login, BigDecimal amount, String type) {
-        String uri = type.equalsIgnoreCase("PUT") ? "/increase-balance" : "/decrease-balance";
+        boolean withdrawal = !type.equalsIgnoreCase("PUT");
+        String uri = withdrawal ? "/decrease-balance" : "/increase-balance";
         String transactionId = UUID.randomUUID().toString();
 
         try {
@@ -41,6 +44,9 @@ public class CashService {
 
         } catch (Exception e) {
             log.error("Cash operation failed: {}", e.getMessage());
+            if (withdrawal) {
+                failedCashOperationsCounter.increment();
+            }
             throw new RuntimeException("Не удалось провести операцию: " + e.getMessage());
         }
     }

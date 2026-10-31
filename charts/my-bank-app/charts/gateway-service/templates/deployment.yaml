@@ -25,8 +25,20 @@ spec:
               value: {{ .Values.env.server_port | quote }}
             - name: SPRING_CLOUD_CONSUL_ENABLED
               value: "false"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            - name: SPRING_APPLICATION_NAME
+              value: "gateway-service"
             - name: SPRING_CONFIG_ADDITIONAL_LOCATION
               value: "file:/config/"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
+            - name: KAFKA_LOGS_TOPIC
+              value: {{ .Values.global.kafkaConfig.logsTopic | quote }}
+            - name: ZIPKIN_ENDPOINT
+              value: {{ .Values.global.zipkinConfig.endpoint | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
           volumeMounts:
             - name: gateway-config
               mountPath: /config

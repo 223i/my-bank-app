@@ -24,19 +24,29 @@ spec:
           env:
             - name: SERVER_PORT
               value: {{ .Values.env.server_port | quote }}
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
             - name: FRONTEND_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: bank-secrets
                   key: frontend-client-secret
             - name: GATEWAY_URL
-              value: {{ .Values.env.gateway_url | quote }}
+              value: {{ printf "%s/api" .Values.env.gateway_url | quote }}
             - name: KEYCLOAK_INTERNAL_URL
               value: {{ .Values.env.keycloak_internal_url | quote }}
             - name: KEYCLOAK_FRONTEND_URL
               value: {{ .Values.env.keycloak_frontend_url | quote }}
             - name: OAUTH2_REDIRECT_URI
               value: "http://bank.local/login/oauth2/code/keycloak"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: {{ .Values.global.kafkaConfig.bootstrapServers | quote }}
+            - name: KAFKA_LOGS_TOPIC
+              value: {{ .Values.global.kafkaConfig.logsTopic | quote }}
+            - name: ZIPKIN_ENDPOINT
+              value: {{ .Values.global.zipkinConfig.endpoint | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.global.environment | quote }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

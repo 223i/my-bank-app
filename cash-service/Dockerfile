@@ -3,10 +3,10 @@ FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
 COPY pom.xml .
-COPY cash-service/pom.xml ./cash-service/
 COPY common-kafka/pom.xml ./common-kafka/
-COPY cash-service/src ./cash-service/src
 COPY common-kafka/src ./common-kafka/src
+COPY cash-service/pom.xml ./cash-service/
+COPY cash-service/src ./cash-service/src
 
 WORKDIR /app
 RUN mvn install -N -B -Dmaven.repo.local=/app/.m2/repository

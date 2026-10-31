@@ -1,3 +1,12 @@
+global:
+  kafkaConfig:
+    bootstrapServers: "my-bank-app-kafka:9092"
+    logsTopic: "application.logs"
+    logsGroup: "logstash-logs-consumer"
+  zipkinConfig:
+    endpoint: "http://my-bank-app-zipkin:9411/api/v2/spans"
+  environment: "kubernetes"
+
 replicaCount: 1
 
 image:
@@ -19,12 +28,16 @@ livenessProbe:
   httpGet:
     path: /actuator/health/liveness
     port: http
-  initialDelaySeconds: 30
+  initialDelaySeconds: 80
   periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 5
 
 readinessProbe:
   httpGet:
     path: /actuator/health/readiness
     port: http
-  initialDelaySeconds: 30
+  initialDelaySeconds: 70
   periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 5

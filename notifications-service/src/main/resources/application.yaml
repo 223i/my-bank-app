@@ -6,13 +6,15 @@ spring:
     consumer:
       group-id: ${KAFKA_NOTIFICATIONS_GROUP:notifications-service}
       auto-offset-reset: earliest
+      observation-enabled: true
       enable-auto-commit: false
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.iron.*"
     listener:
-      ack-mode: record
+      ack-mode: manual
+      observation-enabled: true
   cloud:
     consul:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
@@ -57,10 +59,30 @@ server:
   port: ${SERVER_PORT:8082}
 
 management:
+  tracing:
+    propagation:
+      type: b3
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health,info,metrics,prometheus
   endpoint:
     health:
+      probes:
+        enabled: true
       show-details: always
+  metrics:
+    tags:
+      service: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        http.client.requests: true
+      percentiles:
+        http.server.requests: 0.5,0.95,0.99
+        http.client.requests: 0.5,0.95,0.99

@@ -12,4 +12,3 @@ service:
 env:
   database: "common-db"
   user: "postgres"
-  password: "password"

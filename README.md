@@ -33,6 +33,24 @@
         │               │ (Port 8082)        │                 │
         │               └────────────────────┘                 │
         └──────────────────────────────────────────────────────┘
+                                │
+                                ▼
+        ┌──────────────────────────────────────────────────────┐
+        │               Система мониторинга                     │
+        │  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐  │
+        │  │   Zipkin    │  │ Prometheus  │  │   Grafana    │  │
+        │  │ (Tracing)   │  │ (Metrics)   │  │ (Dashboard)  │  │
+        │  └──────┬──────┘  └──────┬──────┘  └──────┬───────┘  │
+        │         │                │                │          │
+        │         └────────────────┴────────────────┘          │
+        │                          │                           │
+        │                          ▼                           │
+        │                ┌──────────────────┐                  │
+        │                │     ELK Stack    │                  │
+        │                │ (Elasticsearch,  │                  │
+        │                │  Logstash, Kibana)│                 │
+        │                └──────────────────┘                 │
+        └──────────────────────────────────────────────────────┘
 ```
 
 ### Принципы взаимодействия
@@ -44,6 +62,14 @@
 - **Notifications** читает события из Kafka и сохраняет/логирует уведомления
 - **У пользователя** есть доступ только к информации о сумме на своём счёте
 
+### Мониторинг и логирование
+
+- **Zipkin** собирает распределенные трассировки всех HTTP-запросов между микросервисами
+- **Prometheus** собирает метрики производительности, JVM-метрики и бизнес-метрики
+- **Grafana** предоставляет дашборды для визуализации метрик и алертинга
+- **ELK Stack** собирает, обрабатывает и визуализирует логи из всех микросервисов
+- **Все микросервисы** отправляют структурированные логи с trace/span ID для корреляции с трассировкой
+
 ## 🚀 Используемые технологии
 
 ### Основной стек
@@ -54,6 +80,16 @@
 - **Spring for Apache Kafka** - публикация и обработка уведомлений
 - **OAuth 2.0 & JWT** - протокол авторизации и токены
 - **Maven** - система сборки
+
+### Мониторинг и логирование
+- **Zipkin** - распределенная трассировка запросов
+- **Prometheus** - сбор и хранение метрик
+- **Grafana** - визуализация метрик и дашборды
+- **Elasticsearch** - хранение и поиск логов
+- **Logstash** - обработка и фильтрация логов
+- **Kibana** - визуализация и анализ логов
+- **Micrometer** - инструментация метрик в Spring Boot
+- **Logback** - структурированное логирование с отправкой в ELK
 
 ### Инфраструктура
 - **Docker & Docker Compose** - контейнеризация (локальная разработка)
@@ -76,6 +112,17 @@
 | **Notifications** | 8082 | Чтение notification events из Kafka, сохранение и логирование уведомлений | Spring Boot, JPA, Kafka Consumer |
 | **Front UI** | 8083 | Веб-интерфейс пользователя | Spring Boot, Thymeleaf |
 | **Kafka** | 9092 | Брокер сообщений для Notifications pipeline | Apache Kafka, Helm subchart |
+
+### Компоненты мониторинга
+
+| Компонент | Порт | Описание | Технологии |
+|-----------|------|----------|------------|
+| **Zipkin** | 9411 | Распределенная трассировка запросов | Zipkin, Micrometer Tracing |
+| **Prometheus** | 9090 | Сбор и хранение метрик | Prometheus, Micrometer |
+| **Grafana** | 3000 | Визуализация метрик и дашборды | Grafana, Prometheus datasource |
+| **Elasticsearch** | 9200 | Хранение и поиск логов | Elasticsearch, Helm subchart |
+| **Logstash** | 5044/9600 | Обработка и фильтрация логов | Logstash, Logback encoder |
+| **Kibana** | 5601 | Визуализация и анализ логов | Kibana, Elasticsearch |
 
 ## 🛠️ Быстрый старт
 
@@ -238,6 +285,22 @@ kafka-topics.sh --bootstrap-server localhost:9092 --list
 - Docker
 - `kubectl`
 - `helm` ≥ 3.8
+- Kubernetes cluster с включенным ingress controller
+
+---
+### Шаг 0 — Включение Ingress Controller (если не включен)
+Для kind или других кластеров — установите NGINX Ingress Controller:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+```
+
+Подождите, пока ingress controller будет готов:
+```bash
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+```
 
 ---
 ### Шаг 1 — Настройка /etc/hosts
@@ -245,7 +308,7 @@ kafka-topics.sh --bootstrap-server localhost:9092 --list
 Добавьте записи в `/etc/hosts`:
 
 ```bash
-echo "127.0.0.1 bank.local keycloak.bank.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 bank.local keycloak.bank.local elasticsearch.bank.local kibana.bank.local grafana.bank.local" | sudo tee -a /etc/hosts
 ```
 
 ---
@@ -270,7 +333,7 @@ docker images | grep my-bank-app
 
 ### Шаг 3 — Зависимости Helm-чарта
 
-Kafka подключена к зонтичному чарту как dependency. Перед установкой чарта нужно обновить зависимости:
+ Перед установкой чарта нужно обновить зависимости:
 
 ```bash
 helm dependency update charts/my-bank-app
@@ -336,6 +399,18 @@ helm test my-bank-app --namespace bank
 | Keycloak Admin Console | http://keycloak.bank.local/admin |
 | Keycloak логин / пароль | `admin` / `password` |
 
+### Доступ к компонентам мониторинга
+
+| Компонент | Внешний URL | Внутри кластера | Описание |
+|-----------|------------|----------------|----------|
+| **Kibana** | http://kibana.bank.local | http://my-bank-app-kibana:5601 | Анализ логов |
+| **Elasticsearch** | http://elasticsearch.bank.local | http://my-bank-app-elasticsearch:9200 | Поиск логов |
+| **Grafana** | http://grafana.bank.local | http://my-bank-app-grafana:3000 | Дашборды (admin/admin) |
+| **Zipkin** | - | http://my-bank-app-zipkin:9411 | Распределенная трассировка |
+| **Prometheus** | - | http://my-bank-app-prometheus:9090 | Метрики и алерты |
+
+> Kibana, Elasticsearch и Grafana доступны извне через ingress. Остальные компоненты доступны только внутри кластера или через `kubectl port-forward`
+
 ---
 
 ### Обновление чарта после изменений
@@ -390,6 +465,45 @@ kubectl logs -n bank deployment/notifications-service --tail=200
 [NOTIFICATION] To: <login> | Type: <event-type> | Message: <message>
 ```
 
+## 📊 Метрики и алерты
+
+### Бизнес-метрики
+
+Система собирает следующие бизнес-метрики для мониторинга операционной активности:
+
+- **`failed_transfers_total`** - количество неудачных переводов (с группировкой по отправителю/получателю)
+- **`failed_cash_operations_total`** - количество неудачных операций пополнения/снятия (с группировкой по логину)
+- **`notification_failures_total`** - количество неудачных отправок уведомлений (с группировкой по логину)
+
+### Алерты
+
+Настроены алерты для следующих метрик:
+
+#### HTTP-метрики
+- **HighErrorRate** - более 5% ошибок 5xx
+- **High4xxRate** - более 10% ошибок 4xx
+- **HighResponseTime** - 95-й перцентиль времени ответа более 1 секунды
+
+#### JVM-метрики
+- **HighMemoryUsage** - использование heap-памяти более 80%
+- **HighCPUUsage** - использование CPU более 80%
+
+#### Бизнес-метрики
+- **FailedTransfersSpike** - резкое увеличение неудачных переводов
+- **FailedCashOperationsSpike** - резкое увеличение неудачных кассовых операций
+- **NotificationFailuresSpike** - резкое увеличение неудачных уведомлений
+
+#### Доступность сервисов
+- **ServiceDown** - сервис недоступен более 1 минуты
+
+### Дашборды Grafana
+
+Предустановленные дашборды в Grafana:
+
+- **My Bank App - HTTP Metrics** - графики RPS, ошибок, времени ответа
+- **My Bank App - JVM Metrics** - графики памяти, CPU, GC
+- **My Bank App - Business Metrics** - графики бизнес-метрик и ошибок операций
+
 ## 📝 Документация
 
 - [Gateway API](./gateway-service/README.md)
@@ -399,6 +513,3 @@ kubectl logs -n bank deployment/notifications-service --tail=200
 - [Notifications Service](./notifications-service/README.md)
 - [Front UI](./my-bank-front-app/README.md)
 
-## 📄 Лицензия
-
-MIT License

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <!-- Fallback консольный appender для Kafka. Используется когда KAFKA appender не может отправить сообщение -->
+    <appender name="KAFKA_FALLBACK" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %5p [FALLBACK] [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+</included>

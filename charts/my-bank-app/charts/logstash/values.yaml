@@ -1,0 +1,99 @@
+global:
+  kafkaConfig:
+    bootstrapServers: "my-bank-app-kafka:9092"
+    logsTopic: "application.logs"
+    logsGroup: "logstash-logs-consumer"
+
+replicaCount: 1
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  pullPolicy: IfNotPresent
+  tag: "8.15.4"
+
+service:
+  type: ClusterIP
+  port: 5044
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: logstash.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+serviceAccount:
+  create: false
+  name: ""
+
+nodeSelector: {}
+
+tolerations: {}
+
+affinity: {}
+
+# Logstash configuration
+logstash:
+  # JVM settings
+  jvm:
+    xms: "512m"
+    xmx: "512m"
+  
+  # Pipeline configuration
+  pipeline:
+    workers: 2
+    batch_size: 125
+    batch_delay: 50
+  
+  # Input configuration
+  input:
+    beats:
+      port: 5044
+    
+  # Filter configuration
+  filter:
+    # Parse JSON logs
+    json:
+      enabled: true
+    
+    # Add timestamp
+    date:
+      match: [ "timestamp", "ISO8601" ]
+    
+    # Extract trace information
+    grok:
+      patterns:
+        - "%{TIMESTAMP_ISO8601:timestamp} +%{LOGLEVEL:level} \\[%{DATA:service},%{DATA:traceId},%{DATA:spanId}\\] %{GREEDYDATA:message}"
+    
+    # Mask sensitive data
+    mutate:
+      replace:
+        # Mask account numbers (simplified)
+        message: '%{message}'
+  
+  # Output configuration
+  output:
+    elasticsearch:
+      hosts: ["my-bank-app-elasticsearch:9200"]
+      index: "my-bank-app-logs-%{+YYYY.MM.dd}"
+  
+  # Storage configuration
+  storage:
+    enabled: true
+    size: 1Gi
+    class: "" # Use default storage class

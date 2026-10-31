@@ -26,5 +26,23 @@ dependencies:
 - name: kafka
   repository: https://charts.bitnami.com/bitnami
   version: 32.4.3
-digest: sha256:6f8ab9679d6fdd43ed81eab1c4d6e3e81d4a72c4236ff097720f09a8b3665120
-generated: "2026-04-24T18:27:06.778245+03:00"
+- name: zipkin
+  repository: file://./charts/zipkin
+  version: 0.1.0
+- name: prometheus
+  repository: file://./charts/prometheus
+  version: 0.1.0
+- name: grafana
+  repository: file://./charts/grafana
+  version: 0.1.0
+- name: elasticsearch
+  repository: file://./charts/elasticsearch
+  version: 0.1.0
+- name: logstash
+  repository: file://./charts/logstash
+  version: 0.1.0
+- name: kibana
+  repository: file://./charts/kibana
+  version: 0.1.0
+digest: sha256:2d2d5cb8dc670921a5fe08a586efc4dd51cc0980a4774fc32b84f41c4dd56d11
+generated: "2026-04-27T16:40:41.064943+03:00"

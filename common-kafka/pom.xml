@@ -9,7 +9,7 @@
     </parent>
     <artifactId>common-kafka</artifactId>
     <name>common-kafka</name>
-    <description>Common Kafka components for notification system</description>
+    <description>Common Kafka components for notifications and centralized logging</description>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -37,6 +37,20 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        
+        <!-- Kafka Logback Appender для отправки логов в Kafka -->
+        <dependency>
+            <groupId>com.github.danielwegener</groupId>
+            <artifactId>logback-kafka-appender</artifactId>
+            <version>0.2.0-RC2</version>
+        </dependency>
+        
+        <!-- Logstash Logback Encoder для JSON формата логов -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>8.0</version>
         </dependency>
     </dependencies>
 </project>

@@ -9,6 +9,8 @@ import com.iron.model.Account;
 import com.iron.model.ProcessedTransaction;
 import com.iron.repository.AccountRepository;
 import com.iron.repository.ProcessedTransactionRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,9 @@ class AccountServiceTest {
 
     @Mock
     private ProcessedTransactionRepository processedTransactionRepository;
+
+    @Mock
+    private Counter counter;
 
     @InjectMocks
     private AccountService accountService;

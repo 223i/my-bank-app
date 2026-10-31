@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <appender name="KAFKA" class="com.github.danielwegener.logback.kafka.KafkaAppender">
+        <!-- Топик для логов -->
+        <topic>${KAFKA_LOGS_TOPIC:-application.logs}</topic>
+        
+        <!-- Kafka producer configuration -->
+        <producerConfig>bootstrap.servers=${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}</producerConfig>
+        <producerConfig>acks=1</producerConfig>
+        <producerConfig>linger.ms=100</producerConfig>
+        <producerConfig>max.block.ms=5000</producerConfig>
+        <producerConfig>retries=3</producerConfig>
+        <producerConfig>compression.type=lz4</producerConfig>
+        <producerConfig>reconnect.backoff.ms=1000</producerConfig>
+        
+        <!-- Delivery strategy: асинхронная отправка с буфером -->
+        <deliveryStrategy class="com.github.danielwegener.logback.kafka.delivery.AsynchronousDeliveryStrategy">
+            <bufferSize>1000</bufferSize>
+        </deliveryStrategy>
+        
+        <!-- Partitioning: по ключу (service name) -->
+        <keyingStrategy class="com.github.danielwegener.logback.kafka.keying.HostNameKeyingStrategy"/>
+        
+        <!-- JSON encoder для структурированных логов -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <logLevel/>
+                <threadName/>
+                <loggerName/>
+                <message/>
+                <mdc/>
+                <arguments/>
+                <stackTrace/>
+                <pattern>
+                    <pattern>
+                        {
+                          "service": "${APP_NAME}",
+                          "environment": "${ENVIRONMENT:-production}",
+                          "traceId": "%X{traceId:-}",
+                          "spanId": "%X{spanId:-}",
+                          "host": "${HOSTNAME:-unknown}"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+</included>

@@ -1,0 +1,100 @@
+replicaCount: 1
+
+image:
+  repository: grafana/grafana
+  pullPolicy: IfNotPresent
+  tag: "11.2.0"
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: grafana.bank.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+
+serviceAccount:
+  create: false
+  name: ""
+
+nodeSelector: {}
+
+tolerations: {}
+
+affinity: {}
+
+# Grafana configuration
+grafana:
+  # Database (uses SQLite by default)
+  persistence:
+    enabled: true
+    size: 1Gi
+    class: "" # Use default storage class
+
+# Prometheus datasource configuration
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://my-bank-app-prometheus:9090
+        isDefault: true
+        editable: true
+
+# Dashboard provisioning
+dashboards:
+  dashboards.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 10
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+# Alerting configuration
+alerting:
+  # Enable alerting
+  enabled: true
+  
+  # Notification channels
+  notificationChannels:
+    - uid: email-alert
+      orgId: 1
+      name: Email alerts
+      type: email
+      isDefault: false
+      settings:
+        addresses: alerts@example.com
+        subject: Grafana Alert
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
